@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model OtaChannel {
+  id            Int                @id @default(autoincrement())
+  name          String             @db.VarChar(50) // douyin / meituan / ctrip
+  apiConfigJson String?            @db.Text @map("api_config_json")
+  status        String             @default("active") @db.VarChar(20)
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  mappings      OtaProductMapping[]
+  syncLogs      OtaSyncLog[]
+
+  @@map("ota_channel")
+}
+
+model OtaProductMapping {
+  id                 Int       @id @default(autoincrement())
+  channelId          Int       @map("channel_id")
+  localTicketId      Int       @map("local_ticket_id")
+  remoteProductId    String    @db.VarChar(100) @map("remote_product_id")
+  remoteProductName  String    @db.VarChar(200) @map("remote_product_name")
+  retailPrice        Decimal   @db.Decimal(10, 2) @map("retail_price")
+  settlementPrice    Decimal   @db.Decimal(10, 2) @map("settlement_price")
+  status             String    @default("active") @db.VarChar(20)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  channel            OtaChannel @relation(fields: [channelId], references: [id])
+
+  @@map("ota_product_mapping")
+}
+
+model OtaSyncLog {
+  id           Int       @id @default(autoincrement())
+  channelId    Int       @map("channel_id")
+  orderId      Int?      @map("order_id")
+  action       String    @db.VarChar(50)
+  localStatus  String?   @db.VarChar(20) @map("local_status")
+  remoteStatus String?   @db.VarChar(20) @map("remote_status")
+  syncedAt     DateTime  @default(now()) @map("synced_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  channel      OtaChannel @relation(fields: [channelId], references: [id])
+
+  @@map("ota_sync_log")
+}

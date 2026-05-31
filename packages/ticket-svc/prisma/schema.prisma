@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model TicketGroup {
+  id        Int           @id @default(autoincrement())
+  name      String        @db.VarChar(100)
+  sortOrder Int           @default(0) @map("sort_order")
+  status    String        @default("active") @db.VarChar(20)
+  tickets   TicketType[]
+
+  @@map("ticket_group")
+}
+
+model TicketType {
+  id              Int       @id @default(autoincrement())
+  groupId         Int       @map("group_id")
+  name            String    @db.VarChar(200)
+  price           Decimal   @db.Decimal(10, 2)
+  validDays       Int       @default(0) @map("valid_days")
+  usableDays      Int       @default(1) @map("usable_days")
+  totalUses       Int       @default(1) @map("total_uses")
+  gateUses        Int       @default(1) @map("gate_uses")
+  projectLimits   String?   @db.Text @map("project_limits") // JSON: [{projectId, maxUses}]
+  status          String    @default("active") @db.VarChar(20)
+  expireDate      DateTime? @map("expire_date")
+  purchaseLimit   Int?      @map("purchase_limit")
+  needReservation Boolean   @default(false) @map("need_reservation")
+  needApproval    Boolean   @default(false) @map("need_approval")
+  description     String?   @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  group           TicketGroup @relation(fields: [groupId], references: [id])
+
+  @@map("ticket_type")
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(200)
+  location  String?  @db.VarChar(500)
+  status    String   @default("active") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("project")
+}
+
+model MemberCardType {
+  id                    Int       @id @default(autoincrement())
+  name                  String    @db.VarChar(200)
+  type                  String    @db.VarChar(20) // annual/times/stored/timed
+  price                 Decimal   @db.Decimal(10, 2)
+  validityDays          Int       @map("validity_days")
+  totalUses             Int?      @map("total_uses")
+  projectLimits         String?   @db.Text @map("project_limits") // JSON
+  antiFraudInterval     Int       @default(0) @map("anti_fraud_interval")
+  swipePurchaseEnabled  Boolean   @default(false) @map("swipe_purchase_enabled")
+  status                String    @default("active") @db.VarChar(20)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  cards                 MemberCard[]
+
+  @@map("member_card_type")
+}
+
+model MemberCard {
+  id              Int              @id @default(autoincrement())
+  cardNo          String           @unique @db.VarChar(50) @map("card_no")
+  cardTypeId      Int              @map("card_type_id")
+  userId          Int              @map("user_id")
+  balance         Decimal          @default(0) @db.Decimal(10, 2)
+  remainingUses   Int              @default(0) @map("remaining_uses")
+  activatedAt     DateTime?        @map("activated_at")
+  expireAt        DateTime?        @map("expire_at")
+  status          String           @default("active") @db.VarChar(20)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  cardType        MemberCardType   @relation(fields: [cardTypeId], references: [id])
+
+  @@map("member_card")
+}

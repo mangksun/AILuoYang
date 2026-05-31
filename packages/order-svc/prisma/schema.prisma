@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id           Int      @id @default(autoincrement())
+  orderNo      String   @unique @map("order_no") @db.VarChar(32)
+  userId       Int      @map("user_id")
+  ticketTypeId Int      @map("ticket_type_id")
+  quantity     Int
+  totalAmount  Decimal  @map("total_amount") @db.Decimal(10, 2)
+  payAmount    Decimal  @map("pay_amount") @db.Decimal(10, 2)
+  payMethod    String   @map("pay_method") @db.VarChar(20)
+  payStatus    String   @map("pay_status") @db.VarChar(20)
+  channel      String   @db.VarChar(20)
+  status       String   @db.VarChar(20)
+  refundAmount Decimal  @default(0) @map("refund_amount") @db.Decimal(10, 2)
+  refundedAt   DateTime? @map("refunded_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  refunds      Refund[]
+
+  @@map("order")
+}
+
+model Refund {
+  id        Int      @id @default(autoincrement())
+  orderId   Int      @map("order_id")
+  refundNo  String   @unique @map("refund_no") @db.VarChar(32)
+  amount    Decimal  @db.Decimal(10, 2)
+  method    String   @db.VarChar(20)
+  status    String   @db.VarChar(20)
+  reason    String?  @db.Text
+  operatorId Int     @map("operator_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@map("refund")
+}
+
+model Reconciliation {
+  id             Int      @id @default(autoincrement())
+  channel        String   @db.VarChar(20)
+  date           DateTime @db.Date
+  orderCount     Int      @map("order_count")
+  amount         Decimal  @db.Decimal(10, 2)
+  localAmount    Decimal  @map("local_amount") @db.Decimal(10, 2)
+  platformAmount Decimal  @map("platform_amount") @db.Decimal(10, 2)
+  diff           Decimal  @db.Decimal(10, 2)
+  status         String   @db.VarChar(20)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("reconciliation")
+}

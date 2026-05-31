@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         String   @db.VarChar(20)
+  merchantId   Int      @map("merchant_id")
+  status       String   @default("active") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_user")
+}
+
+model Merchant {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(200)
+  configJson String?  @map("config_json") @db.Text
+  status     String   @default("active") @db.VarChar(20)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("merchant")
+}
+
+model Role {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique @db.VarChar(50)
+  permissionsJson String @map("permissions_json") @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("role")
+}

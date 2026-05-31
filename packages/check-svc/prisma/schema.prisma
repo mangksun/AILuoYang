@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model CheckRecord {
+  id         Int      @id @default(autoincrement())
+  orderId    Int      @map("order_id")
+  cardId     Int?     @map("card_id")
+  projectId  Int      @map("project_id")
+  gateId     Int      @map("gate_id")
+  checkType  String   @db.VarChar(20) @map("check_type") // entry/project
+  result     String   @db.VarChar(20) // success/failed
+  failReason String?  @db.Text @map("fail_reason")
+  checkedAt  DateTime @default(now()) @map("checked_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("check_record")
+}
+
+model Verification {
+  id             Int       @id @default(autoincrement())
+  orderId        Int       @unique @map("order_id")
+  status         String    @default("unused") @db.VarChar(20) // unused/used
+  firstVerifiedAt DateTime? @map("first_verified_at")
+  verifiedBy     Int?      @map("verified_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@map("verification")
+}
+
+model Gate {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(200)
+  projectId Int      @map("project_id")
+  location  String?  @db.VarChar(500)
+  status    String   @default("active") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("gate")
+}

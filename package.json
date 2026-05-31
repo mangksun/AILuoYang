@@ -1,0 +1,17 @@
+{
+  "name": "ai-luoyang-ticketing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "景区票务管理系统 - 微服务架构",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "clean": "pnpm -r run clean"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

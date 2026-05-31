@@ -1,0 +1,170 @@
+services:
+  # ==================== 基础设施 ====================
+  mysql:
+    image: mysql:8.0
+    container_name: ticketing-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: ticketing
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ticketing-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== 数据库初始化（一次性） ====================
+  db-init:
+    build:
+      context: .
+      dockerfile: prisma/Dockerfile
+    container_name: ticketing-db-init
+    environment:
+      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # ==================== 后端服务 ====================
+  gateway:
+    build:
+      context: .
+      dockerfile: packages/gateway/Dockerfile
+    container_name: ticketing-gateway
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GATEWAY_PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-change-in-production}
+      TICKET_SVC_URL: http://ticket-svc:3001
+      ORDER_SVC_URL: http://order-svc:3002
+      USER_SVC_URL: http://user-svc:3003
+      CHECK_SVC_URL: http://check-svc:3004
+      OTA_SVC_URL: http://ota-svc:3005
+    depends_on:
+      - ticket-svc
+      - order-svc
+      - user-svc
+      - check-svc
+      - ota-svc
+
+  ticket-svc:
+    build:
+      context: .
+      dockerfile: packages/ticket-svc/Dockerfile
+    container_name: ticketing-ticket-svc
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      TICKET_SVC_PORT: 3001
+      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  order-svc:
+    build:
+      context: .
+      dockerfile: packages/order-svc/Dockerfile
+    container_name: ticketing-order-svc
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      ORDER_SVC_PORT: 3002
+      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  user-svc:
+    build:
+      context: .
+      dockerfile: packages/user-svc/Dockerfile
+    container_name: ticketing-user-svc
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      USER_SVC_PORT: 3003
+      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-change-in-production}
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+
+  check-svc:
+    build:
+      context: .
+      dockerfile: packages/check-svc/Dockerfile
+    container_name: ticketing-check-svc
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    environment:
+      CHECK_SVC_PORT: 3004
+      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  ota-svc:
+    build:
+      context: .
+      dockerfile: packages/ota-svc/Dockerfile
+    container_name: ticketing-ota-svc
+    restart: unless-stopped
+    ports:
+      - "3005:3005"
+    environment:
+      OTA_SVC_PORT: 3005
+      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+
+  # ==================== 前端 ====================
+  web-admin:
+    build:
+      context: .
+      dockerfile: web-admin/Dockerfile
+    container_name: ticketing-web-admin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - gateway
+
+volumes:
+  mysql_data:
+  redis_data:

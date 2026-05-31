@@ -1,0 +1,270 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ticket-svc ====================
+
+model TicketGroup {
+  id        Int           @id @default(autoincrement())
+  name      String        @db.VarChar(100)
+  sortOrder Int           @default(0) @map("sort_order")
+  status    String        @default("active") @db.VarChar(20)
+  tickets   TicketType[]
+
+  @@map("ticket_group")
+}
+
+model TicketType {
+  id              Int       @id @default(autoincrement())
+  groupId         Int       @map("group_id")
+  name            String    @db.VarChar(200)
+  price           Decimal   @db.Decimal(10, 2)
+  validDays       Int       @default(0) @map("valid_days")
+  usableDays      Int       @default(1) @map("usable_days")
+  totalUses       Int       @default(1) @map("total_uses")
+  gateUses        Int       @default(1) @map("gate_uses")
+  projectLimits   String?   @db.Text @map("project_limits")
+  status          String    @default("active") @db.VarChar(20)
+  expireDate      DateTime? @map("expire_date")
+  purchaseLimit   Int?      @map("purchase_limit")
+  needReservation Boolean   @default(false) @map("need_reservation")
+  needApproval    Boolean   @default(false) @map("need_approval")
+  description     String?   @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  group           TicketGroup @relation(fields: [groupId], references: [id])
+
+  @@map("ticket_type")
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(200)
+  location  String?  @db.VarChar(500)
+  status    String   @default("active") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("project")
+}
+
+model MemberCardType {
+  id                    Int       @id @default(autoincrement())
+  name                  String    @db.VarChar(200)
+  type                  String    @db.VarChar(20)
+  price                 Decimal   @db.Decimal(10, 2)
+  validityDays          Int       @map("validity_days")
+  totalUses             Int?      @map("total_uses")
+  projectLimits         String?   @db.Text @map("project_limits")
+  antiFraudInterval     Int       @default(0) @map("anti_fraud_interval")
+  swipePurchaseEnabled  Boolean   @default(false) @map("swipe_purchase_enabled")
+  status                String    @default("active") @db.VarChar(20)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  cards                 MemberCard[]
+
+  @@map("member_card_type")
+}
+
+model MemberCard {
+  id              Int              @id @default(autoincrement())
+  cardNo          String           @unique @db.VarChar(50) @map("card_no")
+  cardTypeId      Int              @map("card_type_id")
+  userId          Int              @map("user_id")
+  balance         Decimal          @default(0) @db.Decimal(10, 2)
+  remainingUses   Int              @default(0) @map("remaining_uses")
+  activatedAt     DateTime?        @map("activated_at")
+  expireAt        DateTime?        @map("expire_at")
+  status          String           @default("active") @db.VarChar(20)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  cardType        MemberCardType   @relation(fields: [cardTypeId], references: [id])
+
+  @@map("member_card")
+}
+
+// ==================== order-svc ====================
+
+model Order {
+  id           Int      @id @default(autoincrement())
+  orderNo      String   @unique @map("order_no") @db.VarChar(32)
+  userId       Int      @map("user_id")
+  ticketTypeId Int      @map("ticket_type_id")
+  quantity     Int
+  totalAmount  Decimal  @map("total_amount") @db.Decimal(10, 2)
+  payAmount    Decimal  @map("pay_amount") @db.Decimal(10, 2)
+  payMethod    String   @map("pay_method") @db.VarChar(20)
+  payStatus    String   @map("pay_status") @db.VarChar(20)
+  channel      String   @db.VarChar(20)
+  status       String   @db.VarChar(20)
+  refundAmount Decimal  @default(0) @map("refund_amount") @db.Decimal(10, 2)
+  refundedAt   DateTime? @map("refunded_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  refunds      Refund[]
+
+  @@map("order")
+}
+
+model Refund {
+  id         Int      @id @default(autoincrement())
+  orderId    Int      @map("order_id")
+  refundNo   String   @unique @map("refund_no") @db.VarChar(32)
+  amount     Decimal  @db.Decimal(10, 2)
+  method     String   @db.VarChar(20)
+  status     String   @db.VarChar(20)
+  reason     String?  @db.Text
+  operatorId Int      @map("operator_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  order      Order    @relation(fields: [orderId], references: [id])
+
+  @@map("refund")
+}
+
+model Reconciliation {
+  id             Int      @id @default(autoincrement())
+  channel        String   @db.VarChar(20)
+  date           DateTime @db.Date
+  orderCount     Int      @map("order_count")
+  amount         Decimal  @db.Decimal(10, 2)
+  localAmount    Decimal  @map("local_amount") @db.Decimal(10, 2)
+  platformAmount Decimal  @map("platform_amount") @db.Decimal(10, 2)
+  diff           Decimal  @db.Decimal(10, 2)
+  status         String   @db.VarChar(20)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("reconciliation")
+}
+
+// ==================== user-svc ====================
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         String   @db.VarChar(20)
+  merchantId   Int      @map("merchant_id")
+  status       String   @default("active") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_user")
+}
+
+model Merchant {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(200)
+  configJson String?  @map("config_json") @db.Text
+  status     String   @default("active") @db.VarChar(20)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("merchant")
+}
+
+model Role {
+  id              Int      @id @default(autoincrement())
+  name            String   @unique @db.VarChar(50)
+  permissionsJson String   @map("permissions_json") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("role")
+}
+
+// ==================== check-svc ====================
+
+model CheckRecord {
+  id         Int      @id @default(autoincrement())
+  orderId    Int      @map("order_id")
+  cardId     Int?     @map("card_id")
+  projectId  Int      @map("project_id")
+  gateId     Int      @map("gate_id")
+  checkType  String   @db.VarChar(20) @map("check_type")
+  result     String   @db.VarChar(20)
+  failReason String?  @db.Text @map("fail_reason")
+  checkedAt  DateTime @default(now()) @map("checked_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("check_record")
+}
+
+model Verification {
+  id              Int       @id @default(autoincrement())
+  orderId         Int       @unique @map("order_id")
+  status          String    @default("unused") @db.VarChar(20)
+  firstVerifiedAt DateTime? @map("first_verified_at")
+  verifiedBy      Int?      @map("verified_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("verification")
+}
+
+model Gate {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(200)
+  projectId Int      @map("project_id")
+  location  String?  @db.VarChar(500)
+  status    String   @default("active") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("gate")
+}
+
+// ==================== ota-svc ====================
+
+model OtaChannel {
+  id            Int                @id @default(autoincrement())
+  name          String             @db.VarChar(50)
+  apiConfigJson String?            @db.Text @map("api_config_json")
+  status        String             @default("active") @db.VarChar(20)
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  mappings      OtaProductMapping[]
+  syncLogs      OtaSyncLog[]
+
+  @@map("ota_channel")
+}
+
+model OtaProductMapping {
+  id                 Int       @id @default(autoincrement())
+  channelId          Int       @map("channel_id")
+  localTicketId      Int       @map("local_ticket_id")
+  remoteProductId    String    @db.VarChar(100) @map("remote_product_id")
+  remoteProductName  String    @db.VarChar(200) @map("remote_product_name")
+  retailPrice        Decimal   @db.Decimal(10, 2) @map("retail_price")
+  settlementPrice    Decimal   @db.Decimal(10, 2) @map("settlement_price")
+  status             String    @default("active") @db.VarChar(20)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  channel            OtaChannel @relation(fields: [channelId], references: [id])
+
+  @@map("ota_product_mapping")
+}
+
+model OtaSyncLog {
+  id           Int       @id @default(autoincrement())
+  channelId    Int       @map("channel_id")
+  orderId      Int?      @map("order_id")
+  action       String    @db.VarChar(50)
+  localStatus  String?   @db.VarChar(20) @map("local_status")
+  remoteStatus String?   @db.VarChar(20) @map("remote_status")
+  syncedAt     DateTime  @default(now()) @map("synced_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  channel      OtaChannel @relation(fields: [channelId], references: [id])
+
+  @@map("ota_sync_log")
+}
