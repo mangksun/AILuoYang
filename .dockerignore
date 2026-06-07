@@ -5,6 +5,7 @@ dist
 *.log
 .DS_Store
 coverage
-.web-admin/node_modules
+web-admin/node_modules
+web-admin/dist
 packages/*/node_modules
 packages/*/dist

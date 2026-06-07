@@ -79,7 +79,7 @@ export async function exportData(req: Request, res: Response, next: NextFunction
     });
 
     const headers = ['ID', '渠道', '日期', '订单数', '金额', '本地金额', '平台金额', '差异', '状态', '创建时间'];
-    const rows = records.map(r => [
+    const rows = records.map((r: typeof records[number]) => [
       r.id,
       r.channel,
       r.date.toISOString().slice(0, 10),

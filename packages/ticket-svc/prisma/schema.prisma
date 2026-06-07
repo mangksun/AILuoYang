@@ -32,6 +32,8 @@ model TicketType {
   purchaseLimit   Int?      @map("purchase_limit")
   needReservation Boolean   @default(false) @map("need_reservation")
   needApproval    Boolean   @default(false) @map("need_approval")
+  totalStock       Int?      @map("total_stock")
+  soldStock        Int       @default(0) @map("sold_stock")
   description     String?   @db.Text
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")

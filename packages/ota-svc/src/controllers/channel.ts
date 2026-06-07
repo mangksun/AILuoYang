@@ -3,12 +3,13 @@ import prisma from '../prisma/client';
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
-    const { name, apiConfigJson } = req.body;
+    const { name, apiConfigJson, status } = req.body;
 
     const channel = await prisma.otaChannel.create({
       data: {
         name,
         apiConfigJson: apiConfigJson ? JSON.stringify(apiConfigJson) : null,
+        status: status || 'active',
       },
     });
 
@@ -21,7 +22,9 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
     const { page = 1, pageSize = 20, status, keyword } = req.query;
-    const skip = (Number(page) - 1) * Number(pageSize);
+    const pageNumber = Math.max(1, Number(page) || 1);
+    const pageSizeNumber = Math.min(100, Math.max(1, Number(pageSize) || 20));
+    const skip = (pageNumber - 1) * pageSizeNumber;
 
     const where: any = {};
     if (status) where.status = status;
@@ -31,7 +34,7 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       prisma.otaChannel.findMany({
         where,
         skip,
-        take: Number(pageSize),
+        take: pageSizeNumber,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.otaChannel.count({ where }),
@@ -40,7 +43,7 @@ export async function list(req: Request, res: Response, next: NextFunction) {
     res.json({
       code: 0,
       message: 'success',
-      data: { list, total, page: Number(page), pageSize: Number(pageSize) },
+      data: { list, total, page: pageNumber, pageSize: pageSizeNumber },
     });
   } catch (err) {
     next(err);

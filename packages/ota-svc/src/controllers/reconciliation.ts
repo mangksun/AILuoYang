@@ -3,11 +3,14 @@ import prisma from '../prisma/client';
 
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
-    const { page = 1, pageSize = 20, channelId, startDate, endDate } = req.query;
-    const skip = (Number(page) - 1) * Number(pageSize);
+    const { page = 1, pageSize = 20, channelId, channel, startDate, endDate } = req.query;
+    const pageNumber = Math.max(1, Number(page) || 1);
+    const pageSizeNumber = Math.min(100, Math.max(1, Number(pageSize) || 20));
+    const skip = (pageNumber - 1) * pageSizeNumber;
 
     const where: any = {};
     if (channelId) where.channelId = Number(channelId);
+    if (channel) where.channel = { name: String(channel) };
     if (startDate || endDate) {
       where.syncedAt = {};
       if (startDate) where.syncedAt.gte = new Date(String(startDate));
@@ -18,7 +21,7 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       prisma.otaSyncLog.findMany({
         where,
         skip,
-        take: Number(pageSize),
+        take: pageSizeNumber,
         orderBy: { syncedAt: 'desc' },
         include: { channel: true },
       }),
@@ -35,14 +38,13 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       _count: { id: true },
     });
 
-    // 补充渠道名称
-    const channelIds = stats.map((s) => s.channelId);
-    const channels = await prisma.otaChannel.findMany({
-      where: { id: { in: channelIds } },
-    });
-    const channelMap = new Map(channels.map((c) => [c.id, c.name]));
+    const channelIds = stats.map((s: any) => s.channelId);
+    const channels = channelIds.length
+      ? await prisma.otaChannel.findMany({ where: { id: { in: channelIds } } })
+      : [];
+    const channelMap = new Map(channels.map((c: any) => [c.id, c.name]));
 
-    const channelStats = stats.map((s) => ({
+    const channelStats = stats.map((s: any) => ({
       channelId: s.channelId,
       channelName: channelMap.get(s.channelId) || 'unknown',
       verifyCount: s._count.id,
@@ -54,8 +56,8 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       data: {
         list,
         total,
-        page: Number(page),
-        pageSize: Number(pageSize),
+        page: pageNumber,
+        pageSize: pageSizeNumber,
         channelStats,
       },
     });

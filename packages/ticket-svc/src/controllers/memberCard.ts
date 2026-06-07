@@ -37,7 +37,9 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
     const { page = 1, pageSize = 20, cardTypeId, status, userId } = req.query;
-    const skip = (Number(page) - 1) * Number(pageSize);
+    const pageNumber = Math.max(1, Number(page) || 1);
+    const pageSizeNumber = Math.min(100, Math.max(1, Number(pageSize) || 20));
+    const skip = (pageNumber - 1) * pageSizeNumber;
 
     const where: any = {};
     if (cardTypeId) where.cardTypeId = Number(cardTypeId);
@@ -48,7 +50,7 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       prisma.memberCard.findMany({
         where,
         skip,
-        take: Number(pageSize),
+        take: pageSizeNumber,
         orderBy: { createdAt: 'desc' },
         include: { cardType: true },
       }),
@@ -58,7 +60,7 @@ export async function list(req: Request, res: Response, next: NextFunction) {
     res.json({
       code: 0,
       message: 'success',
-      data: { list, total, page: Number(page), pageSize: Number(pageSize) },
+      data: { list, total, page: pageNumber, pageSize: pageSizeNumber },
     });
   } catch (err) {
     next(err);

@@ -32,11 +32,22 @@
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="channel" label="渠道" width="100">
         <template #default="{ row }">
-          {{ channelNameMap[row.channel] || row.channel }}
+          {{ channelNameMap[row.channel?.name] || row.channel?.name || '-' }}
         </template>
       </el-table-column>
-      <el-table-column prop="date" label="日期" width="120" />
-      <el-table-column prop="verifiedCount" label="核销张数" width="120" />
+      <el-table-column prop="action" label="动作" width="100" />
+      <el-table-column prop="localStatus" label="本地状态" width="120" />
+      <el-table-column prop="remoteStatus" label="远端状态" width="120" />
+      <el-table-column prop="orderId" label="订单ID" width="100">
+        <template #default="{ row }">
+          {{ row.orderId || '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="syncedAt" label="同步时间" min-width="180">
+        <template #default="{ row }">
+          {{ formatDateTime(row.syncedAt) }}
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="120">
         <template #default="{ row }">
           <el-button
@@ -76,6 +87,12 @@ const channelNameMap = {
   ctrip: '携程'
 }
 
+const actionNameMap = {
+  verify: '核销',
+  refund: '退款',
+  status_sync: '状态同步'
+}
+
 const loading = ref(false)
 const tableData = ref([])
 
@@ -103,6 +120,7 @@ const fetchData = async () => {
     const res = await getOtaReconciliation(params)
     tableData.value = res.list.map(item => ({
       ...item,
+      action: actionNameMap[item.action] || item.action,
       syncing: false
     }))
     pagination.value.total = res.total
@@ -141,7 +159,7 @@ const handleCurrentChange = (val) => {
 const handleSync = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要同步 ${channelNameMap[row.channel] || row.channel} ${row.date} 的数据吗？`,
+      `确定要同步 ${channelNameMap[row.channel?.name] || row.channel?.name || '-'} 的这条 OTA 记录吗？`,
       '确认同步',
       {
         confirmButtonText: '确定',
@@ -151,8 +169,10 @@ const handleSync = async (row) => {
     )
     row.syncing = true
     await syncOtaStatus({
-      channel: row.channel,
-      date: row.date
+      channelId: row.channelId,
+      orderId: row.orderId,
+      action: 'status_sync',
+      localStatus: row.localStatus || 'verified'
     })
     ElMessage.success('同步成功')
     fetchData()
@@ -163,6 +183,11 @@ const handleSync = async (row) => {
   } finally {
     row.syncing = false
   }
+}
+
+const formatDateTime = (value) => {
+  if (!value) return '-'
+  return new Date(value).toLocaleString('zh-CN', { hour12: false })
 }
 
 onMounted(() => {

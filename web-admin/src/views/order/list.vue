@@ -33,23 +33,23 @@
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="order_no" label="订单号" min-width="180" show-overflow-tooltip />
-      <el-table-column prop="ticket_name" label="票种" min-width="120" show-overflow-tooltip />
+      <el-table-column prop="orderNo" label="订单号" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="ticketTypeId" label="票种ID" min-width="120" show-overflow-tooltip />
       <el-table-column prop="quantity" label="数量" width="80" align="center" />
-      <el-table-column prop="total_amount" label="总金额" width="100" align="right">
+      <el-table-column prop="totalAmount" label="总金额" width="100" align="right">
         <template #default="{ row }">
-          {{ formatMoney(row.total_amount) }}
+          {{ formatMoney(row.totalAmount) }}
         </template>
       </el-table-column>
-      <el-table-column prop="pay_method" label="支付方式" width="100" align="center">
+      <el-table-column prop="payMethod" label="支付方式" width="100" align="center">
         <template #default="{ row }">
-          {{ payMethodMap[row.pay_method] || row.pay_method }}
+          {{ payMethodMap[row.payMethod] || row.payMethod }}
         </template>
       </el-table-column>
-      <el-table-column prop="pay_status" label="支付状态" width="100" align="center">
+      <el-table-column prop="payStatus" label="支付状态" width="100" align="center">
         <template #default="{ row }">
-          <el-tag :type="statusTagType(row.pay_status)" size="small">
-            {{ statusMap[row.pay_status] || row.pay_status }}
+          <el-tag :type="statusTagType(row.payStatus)" size="small">
+            {{ statusMap[row.payStatus] || row.payStatus }}
           </el-tag>
         </template>
       </el-table-column>
@@ -65,7 +65,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="created_at" label="创建时间" width="170" />
+      <el-table-column prop="createdAt" label="创建时间" width="170" />
       <el-table-column label="操作" width="100" fixed="right" align="center">
         <template #default="{ row }">
           <el-button type="primary" link size="small" @click="handleViewDetail(row)">
@@ -90,14 +90,14 @@
 
     <el-dialog v-model="detailVisible" title="订单详情" width="700px" destroy-on-close>
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="订单号">{{ detail.order_no }}</el-descriptions-item>
-        <el-descriptions-item label="票种">{{ detail.ticket_name }}</el-descriptions-item>
+        <el-descriptions-item label="订单号">{{ detail.orderNo }}</el-descriptions-item>
+        <el-descriptions-item label="票种ID">{{ detail.ticketTypeId }}</el-descriptions-item>
         <el-descriptions-item label="数量">{{ detail.quantity }}</el-descriptions-item>
-        <el-descriptions-item label="总金额">{{ formatMoney(detail.total_amount) }}</el-descriptions-item>
-        <el-descriptions-item label="支付方式">{{ payMethodMap[detail.pay_method] || detail.pay_method }}</el-descriptions-item>
+        <el-descriptions-item label="总金额">{{ formatMoney(detail.totalAmount) }}</el-descriptions-item>
+        <el-descriptions-item label="支付方式">{{ payMethodMap[detail.payMethod] || detail.payMethod }}</el-descriptions-item>
         <el-descriptions-item label="支付状态">
-          <el-tag :type="statusTagType(detail.pay_status)" size="small">
-            {{ statusMap[detail.pay_status] || detail.pay_status }}
+          <el-tag :type="statusTagType(detail.payStatus)" size="small">
+            {{ statusMap[detail.payStatus] || detail.payStatus }}
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="渠道">{{ channelMap[detail.channel] || detail.channel }}</el-descriptions-item>
@@ -106,16 +106,16 @@
             {{ statusMap[detail.status] || detail.status }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ detail.created_at }}</el-descriptions-item>
-        <el-descriptions-item label="支付时间">{{ detail.paid_at || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="用户ID">{{ detail.user_id || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ detail.createdAt }}</el-descriptions-item>
+        <el-descriptions-item label="退款时间">{{ detail.refundedAt || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="用户ID">{{ detail.userId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="备注">{{ detail.remark || '-' }}</el-descriptions-item>
       </el-descriptions>
 
-      <template v-if="detail.refund_records && detail.refund_records.length">
+      <template v-if="detail.refunds && detail.refunds.length">
         <h4 style="margin: 20px 0 10px">退款记录</h4>
-        <el-table :data="detail.refund_records" border size="small">
-          <el-table-column prop="refund_no" label="退款单号" />
+        <el-table :data="detail.refunds" border size="small">
+          <el-table-column prop="refundNo" label="退款单号" />
           <el-table-column prop="amount" label="退款金额" align="right">
             <template #default="{ row }">{{ formatMoney(row.amount) }}</template>
           </el-table-column>
@@ -125,7 +125,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="reason" label="退款原因" show-overflow-tooltip />
-          <el-table-column prop="created_at" label="退款时间" width="170" />
+          <el-table-column prop="createdAt" label="退款时间" width="170" />
         </el-table>
       </template>
     </el-dialog>
@@ -206,13 +206,13 @@ async function handleSearch() {
   try {
     const params: any = {
       page: pagination.page,
-      page_size: pagination.pageSize,
+      pageSize: pagination.pageSize,
     };
     if (filters.channel) params.channel = filters.channel;
     if (filters.status) params.status = filters.status;
     if (filters.dateRange && filters.dateRange.length === 2) {
-      params.start_date = filters.dateRange[0];
-      params.end_date = filters.dateRange[1];
+      params.startDate = filters.dateRange[0];
+      params.endDate = filters.dateRange[1];
     }
     const res = await getOrders(params);
     tableData.value = res.list || res.records || [];

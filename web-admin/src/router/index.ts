@@ -103,6 +103,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/finance/reconciliation.vue'),
         meta: { title: '财务对账', icon: 'PieChart' },
       },
+      {
+        path: 'ai/admin',
+        name: 'AiAdmin',
+        component: () => import('@/views/ai/admin.vue'),
+        meta: { title: 'AI 后台', icon: 'Monitor' },
+      },
       // 系统设置
       {
         path: 'system/users',

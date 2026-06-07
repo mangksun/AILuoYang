@@ -24,7 +24,7 @@
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="channel" label="渠道" width="100">
         <template #default="{ row }">
-          {{ channelNameMap[row.channel] || row.channel }}
+          {{ channelNameMap[row.channel?.name] || row.channel?.name || '-' }}
         </template>
       </el-table-column>
       <el-table-column prop="localTicketId" label="本地票种ID" width="120" />
@@ -227,7 +227,12 @@ const handleSubmit = async () => {
     if (!valid) return
     submitLoading.value = true
     try {
-      await createOtaMapping(formData.value)
+      await createOtaMapping({
+        ...formData.value,
+        localTicketId: Number(formData.value.localTicketId),
+        retailPrice: Number(formData.value.retailPrice),
+        settlementPrice: Number(formData.value.settlementPrice)
+      })
       ElMessage.success('新增成功')
       dialogVisible.value = false
       fetchData()

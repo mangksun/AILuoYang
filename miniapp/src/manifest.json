@@ -1,0 +1,18 @@
+{
+  "name": "智能文旅",
+  "appid": "__UNI__LUOYANG_AI_TRAVEL",
+  "description": "洛阳智能文旅小程序",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "postcss": true,
+      "minified": true
+    },
+    "usingComponents": true
+  }
+}

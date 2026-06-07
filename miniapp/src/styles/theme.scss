@@ -1,0 +1,70 @@
+$shendu-red: #8B1E22;
+$tang-gold: #D4AF37;
+$sunset-gold: #E2B13C;
+$jade-white: #FAF8F5;
+$brick-gray: #ECE7E1;
+$amber: #D97706;
+$peony: #DB2777;
+$text-main: #2F2523;
+$text-muted: #8F7F76;
+
+@mixin tang-card {
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 24rpx;
+  background: rgba(250, 248, 245, 0.75);
+  box-shadow: 0 8px 32px rgba(139, 30, 34, 0.05);
+  backdrop-filter: blur(20px);
+}
+
+@mixin pressable {
+  transition: transform 180ms ease, opacity 180ms ease;
+
+  &:active {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
+}
+
+.page-shell {
+  min-height: 100vh;
+  padding: 0 28rpx 40rpx;
+  background:
+    radial-gradient(circle at 85% 4%, rgba(212, 175, 55, 0.24), transparent 34%),
+    linear-gradient(180deg, #faf8f5 0%, #ece7e1 58%, #ffffff 100%);
+}
+
+.tang-card {
+  @include tang-card;
+}
+
+.gold-button {
+  @include pressable;
+  position: relative;
+  overflow: hidden;
+  height: 96rpx;
+  border-radius: 999rpx;
+  color: #fffaf0;
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+  background: linear-gradient(135deg, #8b1e22 0%, #b33a2f 48%, #d4af37 100%);
+  box-shadow: 0 16rpx 34rpx rgba(139, 30, 34, 0.22);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    left: -35%;
+    width: 32%;
+    height: 180%;
+    transform: rotate(22deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.72), transparent);
+    animation: shimmer 2.6s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% { left: -40%; }
+  55% { left: 120%; }
+  100% { left: 120%; }
+}

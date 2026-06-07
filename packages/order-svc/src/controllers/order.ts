@@ -15,6 +15,10 @@ const createSchema = Joi.object({
   userId: Joi.number().integer().required(),
   ticketTypeId: Joi.number().integer().required(),
   quantity: Joi.number().integer().min(1).required(),
+  visitDate: Joi.date().iso().allow(null).optional(),
+  visitorCategory: Joi.string().valid('adult', 'child', 'senior', 'student').default('adult'),
+  contactName: Joi.string().max(50).allow('', null).optional(),
+  contactPhone: Joi.string().max(20).allow('', null).optional(),
   totalAmount: Joi.number().precision(2).required(),
   payAmount: Joi.number().precision(2).required(),
   payMethod: Joi.string().max(20).required(),
@@ -24,6 +28,8 @@ const createSchema = Joi.object({
 const listSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   pageSize: Joi.number().integer().min(1).max(100).default(20),
+  orderNo: Joi.string().max(32).optional(),
+  userId: Joi.number().integer().optional(),
   channel: Joi.string().max(20).optional(),
   status: Joi.string().max(20).optional(),
   startDate: Joi.date().iso().optional(),
@@ -51,6 +57,10 @@ export async function create(req: Request, res: Response, next: NextFunction) {
         userId: value.userId,
         ticketTypeId: value.ticketTypeId,
         quantity: value.quantity,
+        visitDate: value.visitDate ? new Date(value.visitDate) : null,
+        visitorCategory: value.visitorCategory,
+        contactName: value.contactName || null,
+        contactPhone: value.contactPhone || null,
         totalAmount: value.totalAmount,
         payAmount: value.payAmount,
         payMethod: value.payMethod,
@@ -74,10 +84,12 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       return;
     }
 
-    const { page, pageSize, channel, status, startDate, endDate } = value;
+    const { page, pageSize, orderNo, userId, channel, status, startDate, endDate } = value;
     const skip = (page - 1) * pageSize;
 
     const where: any = {};
+    if (orderNo) where.orderNo = orderNo;
+    if (userId) where.userId = userId;
     if (channel) where.channel = channel;
     if (status) where.status = status;
     if (startDate || endDate) {
@@ -119,6 +131,40 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
     }
 
     res.json({ code: 0, message: 'success', data: order });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function markPaid(req: Request, res: Response, next: NextFunction) {
+  try {
+    const orderId = Number(req.params.id);
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+
+    if (!order) {
+      res.status(404).json({ code: 404, message: '订单不存在', data: null });
+      return;
+    }
+
+    if (order.payStatus === 'paid') {
+      res.json({ code: 0, message: '订单已支付', data: order });
+      return;
+    }
+
+    if (order.status !== 'pending') {
+      res.status(400).json({ code: 400, message: '订单状态不允许支付', data: null });
+      return;
+    }
+
+    const updated = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        payStatus: 'paid',
+        status: 'paid',
+      },
+    });
+
+    res.json({ code: 0, message: '订单支付成功', data: updated });
   } catch (err) {
     next(err);
   }
@@ -170,7 +216,7 @@ export async function refund(req: Request, res: Response, next: NextFunction) {
         where: { id: orderId },
         data: {
           refundAmount: newRefundAmount,
-          status: isFullRefund ? 'refunded' : 'partial_refunded',
+          status: isFullRefund ? 'refunded' : 'partial_refund',
           refundedAt: new Date(),
         },
       }),

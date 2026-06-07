@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model MiniappUser {
+  id          Int       @id @default(autoincrement())
+  openid      String    @unique @db.VarChar(100)
+  unionid     String?   @db.VarChar(100)
+  phone       String?   @db.VarChar(20)
+  nickname    String?   @db.VarChar(100)
+  avatarUrl   String?   @map("avatar_url") @db.VarChar(500)
+  status      String    @default("active") @db.VarChar(20)
+  lastLoginAt DateTime? @map("last_login_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  payments    MiniappPayment[]
+
+  @@map("miniapp_user")
+}
+
+model MiniappPayment {
+  id              Int       @id @default(autoincrement())
+  orderId         Int       @unique @map("order_id")
+  orderNo         String    @map("order_no") @db.VarChar(32)
+  userId          Int       @map("user_id")
+  prepayId        String?   @map("prepay_id") @db.VarChar(100)
+  transactionId   String?   @map("transaction_id") @db.VarChar(100)
+  payAmount       Decimal   @map("pay_amount") @db.Decimal(10, 2)
+  status          String    @default("pending") @db.VarChar(20)
+  callbackPayload String?   @map("callback_payload") @db.Text
+  paidAt          DateTime? @map("paid_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user            MiniappUser @relation(fields: [userId], references: [id])
+
+  @@map("miniapp_payment")
+}

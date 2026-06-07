@@ -19,7 +19,7 @@
         <el-option label="禁用" value="disabled" />
       </el-select>
       <el-input
-        v-model="filters.user_id"
+        v-model="filters.userId"
         placeholder="用户ID"
         clearable
         style="width: 160px"
@@ -29,25 +29,25 @@
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="card_no" label="卡号" min-width="150" show-overflow-tooltip />
-      <el-table-column prop="card_type_name" label="卡类型" width="110" align="center">
+      <el-table-column prop="cardNo" label="卡号" min-width="150" show-overflow-tooltip />
+      <el-table-column prop="cardType" label="卡类型" width="110" align="center">
         <template #default="{ row }">
-          {{ cardTypeMap[row.card_type] || row.card_type_name || row.card_type }}
+          {{ cardTypeMap[row.cardType?.type] || row.cardType?.name || row.cardTypeId }}
         </template>
       </el-table-column>
-      <el-table-column prop="user_id" label="用户ID" width="100" align="center" />
+      <el-table-column prop="userId" label="用户ID" width="100" align="center" />
       <el-table-column prop="balance" label="余额" width="100" align="right">
         <template #default="{ row }">
           {{ formatMoney(row.balance) }}
         </template>
       </el-table-column>
-      <el-table-column prop="remain_times" label="剩余次数" width="100" align="center">
+      <el-table-column prop="remainingUses" label="剩余次数" width="100" align="center">
         <template #default="{ row }">
-          {{ row.remain_times ?? '-' }}
+          {{ row.remainingUses ?? '-' }}
         </template>
       </el-table-column>
-      <el-table-column prop="activated_at" label="激活时间" width="170" />
-      <el-table-column prop="expired_at" label="过期时间" width="170" />
+      <el-table-column prop="activatedAt" label="激活时间" width="170" />
+      <el-table-column prop="expireAt" label="过期时间" width="170" />
       <el-table-column prop="status" label="状态" width="90" align="center">
         <template #default="{ row }">
           <el-tag :type="statusTagType(row.status)" size="small">
@@ -99,8 +99,8 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="卡类型" prop="card_type_id">
-          <el-select v-model="formData.card_type_id" placeholder="请选择卡类型" style="width: 100%">
+        <el-form-item label="卡类型" prop="cardTypeId">
+          <el-select v-model="formData.cardTypeId" placeholder="请选择卡类型" style="width: 100%">
             <el-option
               v-for="item in cardTypeOptions"
               :key="item.id"
@@ -109,8 +109,8 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="用户ID" prop="user_id">
-          <el-input v-model="formData.user_id" placeholder="请输入用户ID" />
+        <el-form-item label="用户ID" prop="userId">
+          <el-input v-model="formData.userId" placeholder="请输入用户ID" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -169,9 +169,9 @@ const formRef = ref<FormInstance>();
 const cardTypeOptions = ref<any[]>([]);
 
 const filters = reactive({
-  card_type: '',
+  cardType: '',
   status: '',
-  user_id: '',
+  userId: '',
 });
 
 const pagination = reactive({
@@ -181,13 +181,13 @@ const pagination = reactive({
 });
 
 const formData = reactive({
-  card_type_id: null as number | null,
-  user_id: '',
+  cardTypeId: null as number | null,
+  userId: '',
 });
 
 const formRules = {
-  card_type_id: [{ required: true, message: '请选择卡类型', trigger: 'change' }],
-  user_id: [{ required: true, message: '请输入用户ID', trigger: 'blur' }],
+  cardTypeId: [{ required: true, message: '请选择卡类型', trigger: 'change' }],
+  userId: [{ required: true, message: '请输入用户ID', trigger: 'blur' }],
 };
 
 async function fetchCardTypes() {
@@ -204,11 +204,11 @@ async function handleSearch() {
   try {
     const params: any = {
       page: pagination.page,
-      page_size: pagination.pageSize,
+      pageSize: pagination.pageSize,
     };
-    if (filters.card_type) params.card_type = filters.card_type;
+    if (filters.cardType) params.cardTypeId = filters.cardType;
     if (filters.status) params.status = filters.status;
-    if (filters.user_id.trim()) params.user_id = filters.user_id.trim();
+    if (filters.userId.trim()) params.userId = filters.userId.trim();
     const res = await getMemberCards(params);
     tableData.value = res.list || res.records || [];
     pagination.total = res.total || 0;
@@ -220,9 +220,9 @@ async function handleSearch() {
 }
 
 function handleReset() {
-  filters.card_type = '';
+  filters.cardType = '';
   filters.status = '';
-  filters.user_id = '';
+  filters.userId = '';
   pagination.page = 1;
   handleSearch();
 }
@@ -234,8 +234,8 @@ function handleAdd() {
 function resetForm() {
   formRef.value?.resetFields();
   Object.assign(formData, {
-    card_type_id: null,
-    user_id: '',
+    cardTypeId: null,
+    userId: '',
   });
 }
 
@@ -246,8 +246,9 @@ async function handleSubmit() {
   submitLoading.value = true;
   try {
     await createMemberCard({
-      card_type_id: formData.card_type_id,
-      user_id: formData.user_id,
+      cardNo: `MC${Date.now()}`,
+      cardTypeId: formData.cardTypeId,
+      userId: Number(formData.userId),
     });
     ElMessage.success('新增成功');
     dialogVisible.value = false;
@@ -262,7 +263,7 @@ async function handleSubmit() {
 async function handleFreeze(row: any) {
   try {
     await ElMessageBox.confirm(
-      `确认冻结卡号 ${row.card_no}？冻结后该卡将无法使用。`,
+      `确认冻结卡号 ${row.cardNo}？冻结后该卡将无法使用。`,
       '冻结确认',
       { type: 'warning' }
     );
@@ -282,7 +283,7 @@ async function handleFreeze(row: any) {
 async function handleActivate(row: any) {
   try {
     await ElMessageBox.confirm(
-      `确认激活卡号 ${row.card_no}？`,
+      `确认激活卡号 ${row.cardNo}？`,
       '激活确认',
       { type: 'info' }
     );

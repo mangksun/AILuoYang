@@ -61,12 +61,16 @@ services:
       USER_SVC_URL: http://user-svc:3003
       CHECK_SVC_URL: http://check-svc:3004
       OTA_SVC_URL: http://ota-svc:3005
+      MINIAPP_SVC_URL: http://miniapp-svc:3006
+      AI_SVC_URL: http://ai-svc:3010
     depends_on:
       - ticket-svc
       - order-svc
       - user-svc
       - check-svc
       - ota-svc
+      - miniapp-svc
+      - ai-svc
 
   ticket-svc:
     build:
@@ -153,6 +157,63 @@ services:
       db-init:
         condition: service_completed_successfully
 
+  miniapp-svc:
+    build:
+      context: .
+      dockerfile: packages/miniapp-svc/Dockerfile
+    container_name: ticketing-miniapp-svc
+    restart: unless-stopped
+    ports:
+      - "3006:3006"
+    environment:
+      MINIAPP_SVC_PORT: 3006
+      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-change-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      TICKET_SVC_URL: http://ticket-svc:3001
+      ORDER_SVC_URL: http://order-svc:3002
+      CHECK_SVC_URL: http://check-svc:3004
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+      WECHAT_MCH_ID: ${WECHAT_MCH_ID:-}
+      WECHAT_PAY_SERIAL_NO: ${WECHAT_PAY_SERIAL_NO:-}
+      WECHAT_PAY_PRIVATE_KEY: ${WECHAT_PAY_PRIVATE_KEY:-}
+      WECHAT_PAY_API_V3_KEY: ${WECHAT_PAY_API_V3_KEY:-}
+      WECHAT_PAY_NOTIFY_URL: ${WECHAT_PAY_NOTIFY_URL:-}
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      ticket-svc:
+        condition: service_started
+      order-svc:
+        condition: service_started
+      check-svc:
+        condition: service_started
+
+  ai-svc:
+    build:
+      context: .
+      dockerfile: packages/ai-svc/Dockerfile
+    container_name: ticketing-ai-svc
+    restart: unless-stopped
+    ports:
+      - "3010:3010"
+    environment:
+      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+      AI_TEMPERATURE: ${AI_TEMPERATURE:-0.4}
+      AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS:-30}
+      AI_STREAM_TIMEOUT_SECONDS: ${AI_STREAM_TIMEOUT_SECONDS:-60}
+      AI_TICKET_LOOKUP_TIMEOUT_SECONDS: ${AI_TICKET_LOOKUP_TIMEOUT_SECONDS:-5}
+      TICKET_SVC_URL: http://ticket-svc:3001
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      ticket-svc:
+        condition: service_started
+
   # ==================== 前端 ====================
   web-admin:
     build:
@@ -161,7 +222,7 @@ services:
     container_name: ticketing-web-admin
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8800:80"
     depends_on:
       - gateway
 

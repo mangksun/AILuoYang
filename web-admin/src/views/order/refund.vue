@@ -29,14 +29,14 @@
           <span>订单信息</span>
         </template>
         <el-descriptions :column="3" border>
-          <el-descriptions-item label="订单号">{{ orderInfo.order_no }}</el-descriptions-item>
-          <el-descriptions-item label="票种">{{ orderInfo.ticket_name }}</el-descriptions-item>
+          <el-descriptions-item label="订单号">{{ orderInfo.orderNo }}</el-descriptions-item>
+          <el-descriptions-item label="票种ID">{{ orderInfo.ticketTypeId }}</el-descriptions-item>
           <el-descriptions-item label="数量">{{ orderInfo.quantity }}</el-descriptions-item>
           <el-descriptions-item label="总金额">
-            {{ formatMoney(orderInfo.total_amount) }} 元
+            {{ formatMoney(orderInfo.payAmount) }} 元
           </el-descriptions-item>
           <el-descriptions-item label="支付方式">
-            {{ payMethodMap[orderInfo.pay_method] || orderInfo.pay_method }}
+            {{ payMethodMap[orderInfo.payMethod] || orderInfo.payMethod }}
           </el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="statusTagType(orderInfo.status)" size="small">
@@ -44,12 +44,12 @@
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="已退款金额">
-            {{ formatMoney(orderInfo.refunded_amount) }} 元
+            {{ formatMoney(orderInfo.refundAmount) }} 元
           </el-descriptions-item>
           <el-descriptions-item label="可退款金额">
             {{ formatMoney(refundableAmount) }} 元
           </el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ orderInfo.created_at }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ orderInfo.createdAt }}</el-descriptions-item>
         </el-descriptions>
       </el-card>
 
@@ -110,6 +110,7 @@
 import { ref, reactive, computed } from 'vue';
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus';
 import { getOrders, refundOrder } from '@/api/order';
+import { useUserStore } from '@/stores/user';
 
 const payMethodMap: Record<string, string> = {
   cash: '现金',
@@ -142,13 +143,14 @@ function formatMoney(val: number | string | undefined) {
   return Number(val).toFixed(2);
 }
 
+const userStore = useUserStore();
 const searchOrderNo = ref('');
 const searchLoading = ref(false);
 const orderInfo = ref<any>({});
 
 const refundableAmount = computed(() => {
-  const total = Number(orderInfo.value.total_amount) || 0;
-  const refunded = Number(orderInfo.value.refunded_amount) || 0;
+  const total = Number(orderInfo.value.payAmount) || 0;
+  const refunded = Number(orderInfo.value.refundAmount) || 0;
   return Math.max(0, total - refunded);
 });
 
@@ -179,7 +181,7 @@ async function handleSearchOrder() {
   }
   searchLoading.value = true;
   try {
-    const res = await getOrders({ order_no: searchOrderNo.value.trim(), page: 1, page_size: 1 });
+    const res = await getOrders({ orderNo: searchOrderNo.value.trim(), page: 1, pageSize: 1 });
     const list = res.list || res.records || [];
     if (list.length > 0) {
       orderInfo.value = list[0];
@@ -206,7 +208,7 @@ async function handleRefund() {
 
   try {
     await ElMessageBox.confirm(
-      `确认对订单 ${orderInfo.value.order_no} 退款 ${formatMoney(refundForm.amount)} 元？`,
+      `确认对订单 ${orderInfo.value.orderNo} 退款 ${formatMoney(refundForm.amount)} 元？`,
       '退款确认',
       { type: 'warning' }
     );
@@ -220,6 +222,7 @@ async function handleRefund() {
       amount: refundForm.amount,
       method: refundForm.method,
       reason: refundForm.reason,
+      operatorId: Number(userStore.userId) || 0,
     });
     ElMessage.success('退款成功');
     handleSearchOrder();

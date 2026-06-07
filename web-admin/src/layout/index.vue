@@ -72,6 +72,11 @@
           <span>财务对账</span>
         </el-menu-item>
 
+        <el-menu-item index="/ai/admin">
+          <el-icon><Monitor /></el-icon>
+          <span>AI 后台</span>
+        </el-menu-item>
+
         <el-sub-menu index="system">
           <template #title>
             <el-icon><Setting /></el-icon>

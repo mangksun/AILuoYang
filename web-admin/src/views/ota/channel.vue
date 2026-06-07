@@ -21,6 +21,18 @@
       </el-table-column>
     </el-table>
 
+    <div class="pagination-container">
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
+
     <el-dialog
       v-model="dialogVisible"
       title="新增渠道"
@@ -73,6 +85,12 @@ const dialogVisible = ref(false)
 const submitLoading = ref(false)
 const formRef = ref(null)
 
+const pagination = ref({
+  page: 1,
+  pageSize: 10,
+  total: 0
+})
+
 const formData = ref({
   name: '',
   status: 'active'
@@ -86,8 +104,12 @@ const formRules = {
 const fetchData = async () => {
   loading.value = true
   try {
-    const res = await getOtaChannels()
-    tableData.value = Array.isArray(res) ? res : []
+    const res = await getOtaChannels({
+      page: pagination.value.page,
+      pageSize: pagination.value.pageSize
+    })
+    tableData.value = res.list || []
+    pagination.value.total = res.total || 0
   } catch (error) {
     console.error('获取渠道列表失败:', error)
   } finally {
@@ -121,6 +143,17 @@ const handleSubmit = async () => {
   })
 }
 
+const handleSizeChange = (val) => {
+  pagination.value.pageSize = val
+  pagination.value.page = 1
+  fetchData()
+}
+
+const handleCurrentChange = (val) => {
+  pagination.value.page = val
+  fetchData()
+}
+
 onMounted(() => {
   fetchData()
 })
@@ -142,5 +175,11 @@ onMounted(() => {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 </style>

@@ -1,8 +1,8 @@
 import request from './request';
 
 // OTA渠道
-export function getOtaChannels() {
-  return request.get('/ota/channels');
+export function getOtaChannels(params?: any) {
+  return request.get('/ota/channels', { params });
 }
 
 export function createOtaChannel(data: any) {
