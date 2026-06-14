@@ -25,6 +25,13 @@
       }
     },
     {
+      "path": "pages/live2d/index",
+      "style": {
+        "navigationBarTitleText": "洛灵儿数字人",
+        "navigationStyle": "default"
+      }
+    },
+    {
       "path": "pages/user-center/index",
       "style": {
         "navigationStyle": "custom"

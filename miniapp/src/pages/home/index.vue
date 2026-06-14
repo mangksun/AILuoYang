@@ -87,7 +87,7 @@ function navigateFeature(item: { title: string; path: string }) {
 }
 
 function openDigitalGuide() {
-  chat.appendGuide('洛灵儿，请介绍一下洛阳今日推荐玩法');
+  uni.navigateTo({ url: '/pages/live2d/index' });
 }
 
 function sendGuide(text: string) {

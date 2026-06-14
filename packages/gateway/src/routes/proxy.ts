@@ -3,7 +3,12 @@ import axios from 'axios';
 import { Readable } from 'stream';
 
 const DEFAULT_PROXY_TIMEOUT_MS = 10000;
+const DEFAULT_AI_PROXY_TIMEOUT_MS = 70000;
 const MAX_ERROR_BODY_BYTES = 1024 * 1024;
+
+interface ProxyOptions {
+  timeoutMs?: number;
+}
 
 function isStreamResponse(contentType: unknown): boolean {
   return typeof contentType === 'string' && (
@@ -57,10 +62,23 @@ function parseResponseBody(body: string, contentType: unknown, fallbackStatus: n
   }
 }
 
-export function createProxy(serviceName: string, target: string) {
+function getProxyTimeout(serviceName: string, options?: ProxyOptions): number {
+  if (options?.timeoutMs !== undefined) {
+    return options.timeoutMs;
+  }
+
+  if (serviceName === 'ai-svc') {
+    return Number(process.env.AI_PROXY_TIMEOUT_MS || DEFAULT_AI_PROXY_TIMEOUT_MS);
+  }
+
+  return DEFAULT_PROXY_TIMEOUT_MS;
+}
+
+export function createProxy(serviceName: string, target: string, options?: ProxyOptions) {
   return async (req: Request, res: Response, _next: NextFunction) => {
     try {
       const url = `${target}${req.originalUrl}`;
+      const timeoutMs = getProxyTimeout(serviceName, options);
 
       const headers: Record<string, string> = {
         'Content-Type': req.headers['content-type'] || 'application/json',
@@ -84,7 +102,7 @@ export function createProxy(serviceName: string, target: string) {
         url,
         headers,
         data: req.body,
-        timeout: requestExpectsStream(req) ? 0 : DEFAULT_PROXY_TIMEOUT_MS,
+        timeout: requestExpectsStream(req) ? 0 : timeoutMs,
         responseType: 'stream',
         validateStatus: () => true,
       });
@@ -113,6 +131,13 @@ export function createProxy(serviceName: string, target: string) {
     } catch (err: any) {
       if (err.response) {
         res.status(err.response.status).json(err.response.data);
+      } else if (err.code === 'ECONNABORTED') {
+        console.error(`Proxy timeout for ${serviceName}:`, err.message);
+        res.status(504).json({
+          code: 504,
+          message: `服务 ${serviceName} 响应超时，请稍后再试`,
+          data: null,
+        });
       } else {
         console.error(`Proxy error for ${serviceName}:`, err.message);
         res.status(502).json({

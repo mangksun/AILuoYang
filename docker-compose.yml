@@ -63,6 +63,7 @@ services:
       OTA_SVC_URL: http://ota-svc:3005
       MINIAPP_SVC_URL: http://miniapp-svc:3006
       AI_SVC_URL: http://ai-svc:3010
+      AI_PROXY_TIMEOUT_MS: ${AI_PROXY_TIMEOUT_MS:-70000}
     depends_on:
       - ticket-svc
       - order-svc
