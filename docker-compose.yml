@@ -5,7 +5,7 @@ services:
     container_name: ticketing-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: ticketing
     ports:
       - "3307:3306"
@@ -39,7 +39,7 @@ services:
       dockerfile: prisma/Dockerfile
     container_name: ticketing-db-init
     environment:
-      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      DATABASE_URL: mysql://root:1234@mysql:3306/ticketing
     depends_on:
       mysql:
         condition: service_healthy
@@ -82,7 +82,7 @@ services:
       - "3001:3001"
     environment:
       TICKET_SVC_PORT: 3001
-      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      DATABASE_URL: mysql://root:1234@mysql:3306/ticketing
       REDIS_URL: redis://redis:6379
     depends_on:
       db-init:
@@ -100,7 +100,7 @@ services:
       - "3002:3002"
     environment:
       ORDER_SVC_PORT: 3002
-      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      DATABASE_URL: mysql://root:1234@mysql:3306/ticketing
       REDIS_URL: redis://redis:6379
     depends_on:
       db-init:
@@ -118,7 +118,7 @@ services:
       - "3003:3003"
     environment:
       USER_SVC_PORT: 3003
-      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      DATABASE_URL: mysql://root:1234@mysql:3306/ticketing
       JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-change-in-production}
     depends_on:
       db-init:
@@ -134,7 +134,7 @@ services:
       - "3004:3004"
     environment:
       CHECK_SVC_PORT: 3004
-      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      DATABASE_URL: mysql://root:1234@mysql:3306/ticketing
       REDIS_URL: redis://redis:6379
     depends_on:
       db-init:
@@ -152,7 +152,7 @@ services:
       - "3005:3005"
     environment:
       OTA_SVC_PORT: 3005
-      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      DATABASE_URL: mysql://root:1234@mysql:3306/ticketing
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -167,7 +167,7 @@ services:
       - "3006:3006"
     environment:
       MINIAPP_SVC_PORT: 3006
-      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      DATABASE_URL: mysql://root:1234@mysql:3306/ticketing
       JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-change-in-production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
       TICKET_SVC_URL: http://ticket-svc:3001
@@ -199,7 +199,7 @@ services:
     ports:
       - "3010:3010"
     environment:
-      DATABASE_URL: mysql://root:root123456@mysql:3306/ticketing
+      DATABASE_URL: mysql://root:1234@mysql:3306/ticketing
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}

@@ -1,12 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-export interface AuthPayload {
+export interface AdminPayload {
   userId: number;
   username: string;
   role: string;
   merchantId: number;
+  userType?: undefined;
 }
+
+export interface MiniappPayload {
+  userId: number;
+  userType: 'miniapp';
+  openid: string;
+  username?: undefined;
+  role?: undefined;
+  merchantId?: undefined;
+}
+
+export type AuthPayload = AdminPayload | MiniappPayload;
 
 declare global {
   namespace Express {

@@ -71,9 +71,12 @@ export function createProxy(serviceName: string, target: string) {
       }
 
       if ((req as any).user) {
-        headers['X-User-Id'] = String((req as any).user.userId);
-        headers['X-User-Role'] = (req as any).user.role;
-        headers['X-Merchant-Id'] = String((req as any).user.merchantId);
+        const u = (req as any).user;
+        headers['X-User-Id'] = String(u.userId);
+        headers['X-User-Type'] = u.userType || 'admin';
+        if (u.role) headers['X-User-Role'] = u.role;
+        if (u.merchantId) headers['X-Merchant-Id'] = String(u.merchantId);
+        if (u.openid) headers['X-Openid'] = u.openid;
       }
 
       const response = await axios({

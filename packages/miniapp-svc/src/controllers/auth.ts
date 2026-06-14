@@ -24,6 +24,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       where: { openid: session.openid },
       update: {
         unionid: session.unionid || undefined,
+        sessionKey: session.sessionKey,
         nickname: value.nickname || undefined,
         avatarUrl: value.avatarUrl || undefined,
         lastLoginAt: new Date(),
@@ -31,6 +32,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       create: {
         openid: session.openid,
         unionid: session.unionid || null,
+        sessionKey: session.sessionKey,
         nickname: value.nickname || null,
         avatarUrl: value.avatarUrl || null,
         lastLoginAt: new Date(),
@@ -65,6 +67,33 @@ export async function profile(req: Request, res: Response, next: NextFunction) {
     }
 
     res.json({ code: 0, message: 'success', data: user });
+  } catch (err) {
+    next(err);
+  }
+}
+
+const updateProfileSchema = Joi.object({
+  nickname: Joi.string().max(100).allow('', null).optional(),
+  avatarUrl: Joi.string().max(500).allow('', null).optional(),
+});
+
+export async function updateProfile(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { error, value } = updateProfileSchema.validate(req.body);
+    if (error) {
+      res.status(400).json({ code: 400, message: error.details[0].message, data: null });
+      return;
+    }
+
+    const user = await prisma.miniappUser.update({
+      where: { id: req.user!.userId },
+      data: {
+        ...(value.nickname !== undefined && { nickname: value.nickname }),
+        ...(value.avatarUrl !== undefined && { avatarUrl: value.avatarUrl }),
+      },
+    });
+
+    res.json({ code: 0, message: '更新成功', data: user });
   } catch (err) {
     next(err);
   }

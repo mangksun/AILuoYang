@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:3000/api';
+export const API_BASE_URL = 'http://172.20.10.5:3000/api';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -45,7 +45,9 @@ export async function request<T = any>(path: string, options: RequestOptions = {
 
         if (response.statusCode === 401 || body?.code === 401) {
           uni.removeStorageSync('token');
-          uni.showToast({ title: '登录已过期', icon: 'none' });
+          uni.removeStorageSync('user');
+          uni.$emit('auth:expired');
+          uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
         }
 
         reject(new Error(body?.message || '请求失败'));

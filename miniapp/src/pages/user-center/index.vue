@@ -9,17 +9,44 @@
         <view class="nickname">{{ user.user?.nickname || '神都旅人' }}</view>
         <view class="phone">{{ user.user?.phone || '暂未绑定手机号' }}</view>
       </view>
-      <button v-if="!user.token" class="login-btn" @tap="login">登录</button>
+      <button v-if="!user.token" class="login-btn" @tap="login">微信一键登录</button>
     </view>
 
-    <view class="menu-card tang-card">
+    <!-- 登录后完善资料 -->
+    <view v-if="user.token && showProfileSetup" class="profile-setup tang-card">
+      <view class="setup-title">完善个人信息</view>
+      <view class="setup-row">
+        <text class="setup-label">头像</text>
+        <button class="setup-avatar-btn" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
+          <image v-if="pendingAvatar" :src="pendingAvatar" mode="aspectFill" class="setup-avatar-img" />
+          <text v-else class="setup-avatar-text">点击选择</text>
+        </button>
+      </view>
+      <view class="setup-row">
+        <text class="setup-label">昵称</text>
+        <input
+          type="text"
+          class="setup-nickname-input"
+          placeholder="请输入昵称"
+          :value="pendingNickname"
+          @input="onNicknameInput"
+          @blur="onNicknameBlur"
+        />
+      </view>
+      <view class="setup-actions">
+        <button class="setup-confirm gold-button" @tap="confirmProfile">确认</button>
+        <view class="setup-skip" @tap="skipProfile">暂时跳过</view>
+      </view>
+    </view>
+
+    <view v-if="user.token" class="menu-card tang-card">
       <view v-for="item in menus" :key="item" class="menu-item">
         <text>{{ item }}</text>
         <text class="arrow">›</text>
       </view>
     </view>
 
-    <view class="order-card tang-card">
+    <view v-if="user.token" class="order-card tang-card">
       <view class="order-head">
         <text>我的订单</text>
         <button @tap="loadOrders">刷新</button>
@@ -40,13 +67,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useTicketStore } from '@/stores/ticket';
 import { useUserStore } from '@/stores/user';
 
 const user = useUserStore();
 const ticket = useTicketStore();
 const menus = ['我的收藏', '我的问题', '我的攻略', '旅记写作', '设置'];
+
+const showProfileSetup = ref(false);
+const pendingNickname = ref('');
+const pendingAvatar = ref('');
 
 onMounted(() => {
   user.fetchProfile().catch(() => undefined);
@@ -58,9 +89,45 @@ async function login() {
   try {
     await user.loginByWeixin();
     await loadOrders();
+    if (!user.user?.nickname || !user.user?.avatarUrl) {
+      pendingNickname.value = user.user?.nickname || '';
+      pendingAvatar.value = user.user?.avatarUrl || '';
+      showProfileSetup.value = true;
+    }
   } catch (error: any) {
     uni.showToast({ title: error.message || '登录失败', icon: 'none' });
   }
+}
+
+function onChooseAvatar(e: any) {
+  if (e.detail.avatarUrl) {
+    pendingAvatar.value = e.detail.avatarUrl;
+  }
+}
+
+function onNicknameInput(e: any) {
+  pendingNickname.value = e.detail.value;
+}
+
+function onNicknameBlur(e: any) {
+  pendingNickname.value = e.detail.value;
+}
+
+async function confirmProfile() {
+  try {
+    await user.updateProfile({
+      nickname: pendingNickname.value || undefined,
+      avatarUrl: pendingAvatar.value || undefined,
+    });
+    showProfileSetup.value = false;
+    uni.showToast({ title: '资料已更新', icon: 'success' });
+  } catch (error: any) {
+    uni.showToast({ title: error.message || '更新失败', icon: 'none' });
+  }
+}
+
+function skipProfile() {
+  showProfileSetup.value = false;
 }
 
 async function loadOrders() {
@@ -148,6 +215,81 @@ function visitorLabel(category?: string) {
   color: #fff;
   font-size: 25rpx;
   background: $shendu-red;
+}
+
+/* 完善资料 */
+.profile-setup {
+  padding: 36rpx 28rpx;
+  margin-bottom: 24rpx;
+}
+
+.setup-title {
+  color: $text-main;
+  font-size: 32rpx;
+  font-weight: 900;
+  margin-bottom: 24rpx;
+}
+
+.setup-row {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1px solid rgba(236,231,225,0.6);
+}
+
+.setup-label {
+  width: 100rpx;
+  color: $text-muted;
+  font-size: 28rpx;
+}
+
+.setup-avatar-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  line-height: 1;
+}
+
+.setup-avatar-btn::after {
+  border: 0;
+}
+
+.setup-avatar-img {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+}
+
+.setup-avatar-text {
+  color: $shendu-red;
+  font-size: 28rpx;
+}
+
+.setup-nickname-input {
+  flex: 1;
+  text-align: right;
+  color: $text-main;
+  font-size: 28rpx;
+}
+
+.setup-actions {
+  margin-top: 32rpx;
+}
+
+.setup-confirm {
+  width: 100%;
+}
+
+.setup-skip {
+  margin-top: 20rpx;
+  color: $text-muted;
+  font-size: 24rpx;
+  text-align: center;
 }
 
 .menu-card,

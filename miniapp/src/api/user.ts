@@ -20,3 +20,10 @@ export function login(data: { code: string; nickname?: string; avatarUrl?: strin
 export function getProfile() {
   return request<MiniappUser>('/miniapp/auth/profile');
 }
+
+export function updateProfile(data: { nickname?: string; avatarUrl?: string }) {
+  return request<MiniappUser>('/miniapp/auth/profile', {
+    method: 'PUT',
+    data,
+  });
+}
