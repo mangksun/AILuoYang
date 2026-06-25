@@ -25,6 +25,24 @@
       }
     },
     {
+      "path": "pages/city-map/index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/city-map/attraction-detail",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/city-map/food-detail",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/live2d/index",
       "style": {
         "navigationBarTitleText": "洛灵儿数字人",

@@ -59,7 +59,7 @@ const bentoItems = [
   { title: 'AI伴游', desc: '到景自动讲解', icon: '游', path: '' },
   { title: '行程定制', desc: '预算天数生成路线', icon: '程', path: '/pages/itinerary/index' },
   { title: '便捷购票', desc: '真实票种在线下单', icon: '票', path: '/pages/ticket/index' },
-  { title: '城市地图', desc: '高德导航唤起', icon: '图', path: '' },
+  { title: '城市地图', desc: '高德导航唤起', icon: '图', path: '/pages/city-map/index' },
   { title: '攻略推荐', desc: '牡丹与古都灵感', icon: '略', path: '' },
 ];
 
@@ -80,7 +80,11 @@ function goUser() {
 
 function navigateFeature(item: { title: string; path: string }) {
   if (item.path) {
-    uni.switchTab({ url: item.path });
+    if (item.path.startsWith('/pages/city-map')) {
+      uni.navigateTo({ url: item.path });
+    } else {
+      uni.switchTab({ url: item.path });
+    }
     return;
   }
   chat.appendGuide(`我想了解${item.title}`);
