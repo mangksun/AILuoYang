@@ -12,7 +12,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 # Docker (recommended for full stack)
 docker compose up -d              # start all services
 docker compose down               # stop all services
-docker compose logs -f <service>  # tail logs for a service
+docker compose logs -f <service>  # tail logs for a service 
 docker compose build --no-cache <service>  # rebuild one service
 docker compose ps -a              # check container status
 
