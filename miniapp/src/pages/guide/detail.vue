@@ -317,8 +317,9 @@ function loadGuide(id: string) {
   }
 }
 
-onLoad((opts: { id?: string }) => {
-  if (opts?.id) loadGuide(opts.id);
+onLoad((opts) => {
+  const id = opts?.id as string | undefined;
+  if (id) loadGuide(id);
 });
 
 function goBack() {
