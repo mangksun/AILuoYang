@@ -50,22 +50,25 @@
       <view v-if="currentDetailTab === 'weather'" class="detail-section">
         <view class="section-title">实时天气</view>
         <view v-if="weatherLoading" class="loading-text">加载天气中...</view>
-        <view v-else-if="weatherError" class="loading-text">{{ weatherError }}</view>
+        <view v-else-if="weatherError" class="weather-error-box">
+          <view class="loading-text">{{ weatherError }}</view>
+          <view class="retry-btn" @tap="loadWeather">重新获取</view>
+        </view>
         <view v-else-if="weather" class="weather-list">
           <view class="weather-item today">
-            <view class="weather-icon">{{ weatherIcon(weather.current.weathercode) }}</view>
+            <view class="weather-icon">{{ weatherIconByIcon(weather.current.icon) }}</view>
             <view class="weather-info">
-              <view class="weather-temp-main">{{ weather.current.temperature }}°C</view>
-              <view class="weather-desc">{{ weatherDesc(weather.current.weathercode) }}</view>
+              <view class="weather-temp-main">{{ weather.current.temp }}</view>
+              <view class="weather-desc">{{ weather.current.label }}</view>
             </view>
           </view>
           <view class="weather-forecast">
             <view class="forecast-title">未来3天</view>
             <view class="forecast-list">
-              <view v-for="(day, idx) in weather.daily" :key="idx" class="forecast-item">
-                <text class="forecast-date">{{ day.date }}</text>
-                <text class="forecast-icon">{{ weatherIcon(day.weathercode) }}</text>
-                <text class="forecast-temp">{{ day.tempMin }}° / {{ day.tempMax }}°</text>
+              <view v-for="(day, idx) in weather.forecast" :key="idx" class="forecast-item">
+                <text class="forecast-date">{{ day.label }}</text>
+                <text class="forecast-icon">{{ weatherIconByIcon(day.icon) }}</text>
+                <text class="forecast-temp">{{ day.temp }}</text>
               </view>
             </view>
           </view>
@@ -154,26 +157,55 @@ async function loadAttraction(id: string) {
 
 async function loadWeather() {
   if (!attraction.value) return;
+  if (weatherLoading.value) return;
   weatherLoading.value = true;
   weatherError.value = '';
   try {
-    weather.value = await getWeather(attraction.value.latitude, attraction.value.longitude);
+    const lat = Number(attraction.value.latitude);
+    const lon = Number(attraction.value.longitude);
+    if (!lat || !lon) {
+      throw new Error('坐标数据异常');
+    }
+    weather.value = await getWeather(lat, lon);
   } catch (e: any) {
-    weatherError.value = e.message || '获取天气失败';
+    const msg = e?.errMsg || e?.message || '';
+    const fallback = buildFallbackWeather();
+    if (fallback) {
+      weather.value = fallback;
+      weatherError.value = '天气接口暂不可用，显示参考数据';
+    } else if (msg.includes('localhost') || msg.includes('fail')) {
+      weatherError.value = '网络连接失败，请确认后端服务已启动';
+    } else {
+      weatherError.value = msg || '获取天气失败，请稍后再试';
+    }
   } finally {
     weatherLoading.value = false;
   }
 }
 
-function weatherIcon(code: number) {
-  if (code === 0) return '\u2600';
-  if (code >= 1 && code <= 3) return '\u2601';
-  if (code >= 45 && code <= 48) return '\u2601';
-  if (code >= 51 && code <= 67) return '\u2614';
-  if (code >= 71 && code <= 77) return '\u2744';
-  if (code >= 80 && code <= 82) return '\u2614';
-  if (code >= 85 && code <= 86) return '\u2744';
-  if (code >= 95 && code <= 99) return '\u26C8';
+function buildFallbackWeather() {
+  const today = new Date();
+  const tomorrow = new Date(today.getTime() + 86400000);
+  const dayAfter = new Date(today.getTime() + 86400000 * 2);
+  const labels = ['今天', '明天', '后天'];
+  const dates = [today, tomorrow, dayAfter].map((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+  return {
+    current: { temp: '--°C', label: '参考数据', icon: 'sun' },
+    forecast: dates.slice(0, 3).map((date, idx) => ({
+      date,
+      label: labels[idx],
+      icon: 'cloud',
+      temp: '参考温度 --~--°C',
+    })),
+  };
+}
+
+function weatherIconByIcon(icon: string) {
+  if (icon === 'sun') return '\u2600';
+  if (icon === 'cloud') return '\u2601';
+  if (icon === 'rain') return '\u2614';
+  if (icon === 'snow') return '\u2744';
+  if (icon === 'storm') return '\u26C8';
   return '\u2600';
 }
 
@@ -190,7 +222,12 @@ function weatherDesc(code: number) {
 }
 
 function goBack() {
-  uni.navigateBack();
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack({ delta: 1 });
+  } else {
+    uni.switchTab({ url: '/pages/home/index', fail: () => uni.reLaunch({ url: '/pages/home/index' }) });
+  }
 }
 
 function makePhoneCall() {
@@ -203,24 +240,34 @@ function makePhoneCall() {
 
 function openNavigation() {
   if (!attraction.value) return;
+  const doOpen = () => {
+    uni.openLocation({
+      latitude: Number(attraction.value.latitude),
+      longitude: Number(attraction.value.longitude),
+      name: attraction.value.name,
+      address: attraction.value.address || '',
+      fail: () => {
+        uni.showToast({ title: '打开地图失败', icon: 'none' });
+      },
+    });
+  };
   uni.getLocation({
     type: 'gcj02',
-    success: () => {
-      uni.openLocation({
-        latitude: attraction.value.latitude,
-        longitude: attraction.value.longitude,
-        name: attraction.value.name,
-        address: attraction.value.address,
-      });
-    },
+    success: () => doOpen(),
     fail: () => {
-      uni.showToast({ title: '获取位置失败，请检查定位权限', icon: 'none' });
+      uni.showModal({
+        title: '提示',
+        content: '需要定位权限才能使用导航，是否继续直接打开地图？',
+        success: (res) => {
+          if (res.confirm) doOpen();
+        },
+      });
     },
   });
 }
 
-watch(currentDetailTab, (val) => {
-  if (val === 'weather' && !weather.value && !weatherLoading.value) {
+watch([currentDetailTab, attraction], ([tab, attr]) => {
+  if (tab === 'weather' && attr && !weather.value && !weatherLoading.value) {
     loadWeather();
   }
 });
@@ -361,6 +408,22 @@ watch(currentDetailTab, (val) => {
   padding: 40rpx;
   color: $text-muted;
   font-size: 28rpx;
+}
+
+.weather-error-box {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  align-items: center;
+}
+
+.retry-btn {
+  padding: 16rpx 48rpx;
+  border-radius: 999rpx;
+  background: $shendu-red;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
 }
 
 /* 电话 */
@@ -526,7 +589,7 @@ watch(currentDetailTab, (val) => {
   margin-top: 32rpx;
   padding: 28rpx;
   border-radius: 16rpx;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: $shendu-red;
   color: #fff;
   font-size: 30rpx;
   font-weight: 700;

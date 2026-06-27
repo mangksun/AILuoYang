@@ -14,6 +14,7 @@
     "enhance": true,
     "showShadowRootInWxmlPanel": true,
     "packNpmRelationList": [],
+    "urlCheck": false,
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],

@@ -198,13 +198,17 @@ export interface ItineraryPlan {
 }
 
 export function generateItinerary(data: ItineraryRequest) {
+  const payload: Record<string, any> = {
+    districts: data.districts || [],
+    peopleCount: data.peopleCount,
+    preferences: data.preferences || [],
+    days: data.days || 1,
+  };
+  if (data.startDate) payload.startDate = data.startDate;
+  if (data.endDate) payload.endDate = data.endDate;
+  if (data.budget !== undefined && data.budget !== null) payload.budget = data.budget;
   return request<ItineraryPlan>('/ai/itinerary/plans', {
     method: 'POST',
-    data: {
-      ...data,
-      days: data.days || 1,
-      peopleCount: data.peopleCount,
-      preferences: [...data.districts, ...data.preferences],
-    },
+    data: payload,
   });
 }

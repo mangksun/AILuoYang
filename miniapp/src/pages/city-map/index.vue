@@ -67,6 +67,13 @@
               <text class="card-price" :class="{ free: item.price === '免费' }">{{ item.price }}</text>
             </view>
           </view>
+          <view
+            v-if="item.latitude && item.longitude"
+            class="nav-btn"
+            @tap.stop="openNavigation({ latitude: Number(item.latitude), longitude: Number(item.longitude), name: item.name, address: item.address })"
+          >
+            <text>导航</text>
+          </view>
         </view>
       </scroll-view>
     </view>
@@ -227,7 +234,12 @@ function getFoodCategoryLabel(key: string) {
 }
 
 function goBack() {
-  uni.navigateBack();
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack({ delta: 1 });
+  } else {
+    uni.switchTab({ url: '/pages/home/index', fail: () => uni.reLaunch({ url: '/pages/home/index' }) });
+  }
 }
 
 function goAttractionDetail(id: string) {
@@ -239,14 +251,28 @@ function goFoodDetail(id: string) {
 }
 
 function openNavigation(item: { name: string; address: string; latitude: number; longitude: number }) {
-  uni.openLocation({
-    latitude: item.latitude,
-    longitude: item.longitude,
-    name: item.name,
-    address: item.address,
-    success: () => {},
+  const doOpen = () => {
+    uni.openLocation({
+      latitude: item.latitude,
+      longitude: item.longitude,
+      name: item.name,
+      address: item.address,
+      fail: () => {
+        uni.showToast({ title: '打开地图失败', icon: 'none' });
+      },
+    });
+  };
+  uni.getLocation({
+    type: 'gcj02',
+    success: () => doOpen(),
     fail: () => {
-      uni.showToast({ title: '打开地图失败', icon: 'none' });
+      uni.showModal({
+        title: '提示',
+        content: '需要定位权限才能使用导航，是否继续直接打开地图？',
+        success: (res) => {
+          if (res.confirm) doOpen();
+        },
+      });
     },
   });
 }
@@ -404,6 +430,19 @@ function openNavigation(item: { name: string; address: string; latitude: number;
   gap: 22rpx;
   padding: 22rpx;
   margin-bottom: 22rpx;
+  position: relative;
+}
+
+.attraction-card .nav-btn {
+  position: absolute;
+  right: 22rpx;
+  bottom: 22rpx;
+  padding: 10rpx 24rpx;
+  border-radius: 12rpx;
+  background: $shendu-red;
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 700;
 }
 
 .card-img {

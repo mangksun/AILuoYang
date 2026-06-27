@@ -8,6 +8,13 @@ $peony: #DB2777;
 $text-main: #2F2523;
 $text-muted: #8F7F76;
 
+$paper-bg: #FAF8F5;
+$ink-deep: #2F2523;
+$ink-body: #4A3F3B;
+$ink-sub: #8F7F76;
+$gold-main: #D4AF37;
+$gold-soft: rgba(212, 175, 55, 0.16);
+
 @mixin tang-card {
   border: 1px solid rgba(212, 175, 55, 0.25);
   border-radius: 24rpx;
