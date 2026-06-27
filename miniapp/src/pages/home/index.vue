@@ -12,30 +12,30 @@
       <view class="palace-shadow">明堂天堂</view>
     </view>
 
-    <scroll-view class="bento-scroll" scroll-x="true" show-scrollbar="false">
-      <view class="bento-track">
-        <view class="ling-card tang-card" @tap="openDigitalGuide">
-          <view class="ling-glow" />
-          <view class="ling-person">
-            <view class="hair" />
-            <view class="face">洛</view>
-            <view class="dress" />
-            <view class="peony">牡丹</view>
-          </view>
-          <view class="ling-copy">
-            <view class="ling-title">唐风数字人</view>
-            <view class="ling-name">洛灵儿</view>
-            <view class="ling-desc">陪你问路、讲景、买票</view>
-          </view>
-        </view>
-
-        <view v-for="item in bentoItems" :key="item.title" class="bento-card tang-card" @tap="navigateFeature(item)">
-          <view class="bento-icon">{{ item.icon }}</view>
-          <view class="bento-title">{{ item.title }}</view>
-          <view class="bento-desc">{{ item.desc }}</view>
-        </view>
+    <view class="ling-card tang-card" @tap="openDigitalGuide">
+      <view class="ling-glow" />
+      <view class="ling-person">
+        <view class="hair" />
+        <view class="face">洛</view>
+        <view class="dress" />
+        <view class="peony">牡丹</view>
       </view>
-    </scroll-view>
+      <view class="ling-copy">
+        <view class="ling-title">唐风数字人</view>
+        <view class="ling-name">洛灵儿</view>
+        <view class="ling-desc">陪你问路、讲景、买票</view>
+      </view>
+    </view>
+
+    <view class="bento-grid">
+      <view v-for="item in bentoItems" :key="item.title" class="bento-card tang-card" @tap="navigateFeature(item)">
+        <view class="bento-icon">{{ item.icon }}</view>
+        <view class="bento-title">{{ item.title }}</view>
+        <view class="bento-desc">{{ item.desc }}</view>
+      </view>
+      <view v-for="n in (6 - bentoItems.length)" :key="'empty-' + n" class="bento-card empty-card">
+      </view>
+    </view>
 
     <view class="section-title">今日灵感</view>
     <view class="inspire-grid">
@@ -55,9 +55,17 @@ import { useUserStore } from '@/stores/user';
 const chat = useChatStore();
 const user = useUserStore();
 
+const tabBarPaths = [
+  '/pages/home/index',
+  '/pages/itinerary/index',
+  '/pages/ticket/index',
+  '/pages/user-center/index',
+];
+
 const bentoItems = [
   { title: 'AI伴游', desc: '到景自动讲解', icon: '游', path: '' },
   { title: '行程定制', desc: '预算天数生成路线', icon: '程', path: '/pages/itinerary/index' },
+  { title: '旅行游记', desc: 'AI 创作专属游记', icon: '记', path: '/pages/travelogue/index' },
   { title: '便捷购票', desc: '真实票种在线下单', icon: '票', path: '/pages/ticket/index' },
   { title: '城市地图', desc: '高德导航唤起', icon: '图', path: '/pages/city-map/index' },
   { title: '攻略推荐', desc: '8 篇精选深度游', icon: '略', path: '/pages/guide/list' },
@@ -80,10 +88,10 @@ function goUser() {
 
 function navigateFeature(item: { title: string; path: string }) {
   if (item.path) {
-    if (item.path.startsWith('/pages/city-map') || item.path.startsWith('/pages/guide')) {
-      uni.navigateTo({ url: item.path });
-    } else {
+    if (tabBarPaths.includes(item.path)) {
       uni.switchTab({ url: item.path });
+    } else {
+      uni.navigateTo({ url: item.path });
     }
     return;
   }
@@ -166,21 +174,18 @@ function sendGuide(text: string) {
   font-weight: 900;
 }
 
-.bento-scroll {
-  width: calc(100vw - 28rpx);
-  margin-left: -2rpx;
-}
-
-.bento-track {
-  display: flex;
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 22rpx;
-  padding: 20rpx 28rpx 26rpx 2rpx;
+  margin-top: 20rpx;
 }
 
 .ling-card {
   position: relative;
-  flex: 0 0 360rpx;
+  width: 100%;
   height: 360rpx;
+  margin-top: 20rpx;
   padding: 26rpx;
   overflow: visible;
   background: linear-gradient(145deg, rgba(139, 30, 34, 0.92), rgba(250, 248, 245, 0.72));

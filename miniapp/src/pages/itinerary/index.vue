@@ -171,7 +171,16 @@ async function submit() {
 }
 
 function goBack() {
-  uni.navigateBack();
+  if (showResult.value) {
+    showResult.value = false;
+    return;
+  }
+  const pages = getCurrentPages();
+  if (pages.length > 1) {
+    uni.navigateBack();
+  } else {
+    uni.switchTab({ url: '/pages/home/index' });
+  }
 }
 
 async function sendMessage() {

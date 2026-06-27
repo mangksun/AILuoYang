@@ -197,6 +197,24 @@ export interface ItineraryPlan {
   }>;
 }
 
+export interface TravelogueResponse {
+  title: string;
+  content: string;
+  style?: string;
+  spots?: string[];
+}
+
+export function generateTravelogue(data: { spots: string[]; style?: string; experience?: string }) {
+  return request<TravelogueResponse>('/ai/travelogue/generate', {
+    method: 'POST',
+    data: {
+      spots: data.spots || [],
+      style: data.style || '口语化',
+      experience: data.experience || '',
+    },
+  });
+}
+
 export function generateItinerary(data: ItineraryRequest) {
   const payload: Record<string, any> = {
     districts: data.districts || [],
