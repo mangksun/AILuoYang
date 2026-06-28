@@ -4,6 +4,43 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// ===== 本地图片映射（写死，保证每次编译/刷新都显示相同照片） =====
+// key 为数据库 id，value 为本地静态资源路径（miniapp/src/static/imgs/ 下的文件）
+const LOCAL_ATTRACTION_IMAGES: Record<string, string[]> = {
+  longmen: ['/static/imgs/longmen.jpg', '/static/imgs/longmen.jpg', '/static/imgs/longmen.jpg', '/static/imgs/longmen.jpg'],
+  baima: ['/static/imgs/baima.jpg', '/static/imgs/baima.jpg'],
+  laojun: ['/static/imgs/laojun.jpg', '/static/imgs/laojun.jpg', '/static/imgs/laojun.jpg'],
+  baiyun: ['/static/imgs/baiyun.jpg', '/static/imgs/baiyun.jpg'],
+  guanlin: ['/static/imgs/guanlin.jpg', '/static/imgs/guanlin.jpg'],
+  mingtang: ['/static/imgs/mingtang.jpg', '/static/imgs/mingtang.jpg', '/static/imgs/mingtang.jpg'],
+  luopu: ['/static/imgs/luopu.jpg', '/static/imgs/luopu.jpg'],
+  luoba: ['/static/imgs/balu.jpg', '/static/imgs/balu.jpg'],
+};
+
+const LOCAL_FOOD_IMAGES: Record<string, string[]> = {
+  niurou: ['/static/imgs/niurou.jpg', '/static/imgs/niurou.jpg'],
+  bufan: ['/static/imgs/bufan-tang.jpg', '/static/imgs/bufan-tang.jpg'],
+  shui: ['/static/imgs/shui.jpg', '/static/imgs/shui.jpg', '/static/imgs/shui.jpg'],
+  jiang: ['/static/imgs/jiangmian.jpg', '/static/imgs/jiangmian.jpg'],
+  mudan: ['/static/imgs/mudan.jpg', '/static/imgs/mudan.jpg'],
+  shaobing: ['/static/imgs/shaobing.jpg', '/static/imgs/shaobing.jpg'],
+  hula: ['/static/imgs/hula.jpg', '/static/imgs/hula.jpg'],
+};
+
+const LOCAL_HERITAGE_IMAGES: Record<string, string[]> = {
+  peony: ['/static/imgs/peony.jpg', '/static/imgs/peony.jpg'],
+  sancai: ['/static/imgs/sancai.jpg', '/static/imgs/sancai.jpg'],
+  deng: ['/static/imgs/deng.jpg', '/static/imgs/deng.jpg'],
+  pi: ['/static/imgs/piying.jpg', '/static/imgs/piying.jpg'],
+  jian: ['/static/imgs/luoyangchan.jpg', '/static/imgs/luoyangchan.jpg'],
+  zhi: ['/static/imgs/papercut.jpg', '/static/imgs/papercut.jpg'],
+};
+
+function patchImages(id: string | undefined | null, fallback: string[], map: Record<string, string[]>): string[] {
+  if (id && map[id] && map[id].length) return [...map[id]];
+  return fallback && fallback.length ? fallback : [];
+}
+
 // ===== 景点 =====
 
 export async function listAttractions(req: Request, res: Response) {
@@ -12,13 +49,16 @@ export async function listAttractions(req: Request, res: Response) {
   const items = await prisma.attraction.findMany({ where, orderBy: { createdAt: 'asc' } });
   res.json({
     success: true,
-    data: items.map((item) => ({
-      ...item,
-      tags: item.tags ? JSON.parse(item.tags) : [],
-      facilities: item.facilities ? JSON.parse(item.facilities) : [],
-      traffic: item.traffic ? JSON.parse(item.traffic) : null,
-      images: item.images ? JSON.parse(item.images) : [],
-    })),
+    data: items.map((item: any) => {
+      const parsedImages = item.images ? JSON.parse(item.images) : [];
+      return {
+        ...item,
+        tags: item.tags ? JSON.parse(item.tags) : [],
+        facilities: item.facilities ? JSON.parse(item.facilities) : [],
+        traffic: item.traffic ? JSON.parse(item.traffic) : null,
+        images: patchImages(item.id, parsedImages, LOCAL_ATTRACTION_IMAGES),
+      };
+    }),
   });
 }
 
@@ -29,6 +69,7 @@ export async function getAttraction(req: Request, res: Response) {
     res.status(404).json({ success: false, message: '景点不存在' });
     return;
   }
+  const parsedImages = item.images ? JSON.parse(item.images) : [];
   res.json({
     success: true,
     data: {
@@ -36,7 +77,7 @@ export async function getAttraction(req: Request, res: Response) {
       tags: item.tags ? JSON.parse(item.tags) : [],
       facilities: item.facilities ? JSON.parse(item.facilities) : [],
       traffic: item.traffic ? JSON.parse(item.traffic) : null,
-      images: item.images ? JSON.parse(item.images) : [],
+      images: patchImages(item.id, parsedImages, LOCAL_ATTRACTION_IMAGES),
     },
   });
 }
@@ -49,10 +90,13 @@ export async function listFoods(req: Request, res: Response) {
   const items = await prisma.food.findMany({ where, orderBy: { createdAt: 'asc' } });
   res.json({
     success: true,
-    data: items.map((item) => ({
-      ...item,
-      images: item.images ? JSON.parse(item.images) : [],
-    })),
+    data: items.map((item: any) => {
+      const parsedImages = item.images ? JSON.parse(item.images) : [];
+      return {
+        ...item,
+        images: patchImages(item.id, parsedImages, LOCAL_FOOD_IMAGES),
+      };
+    }),
   });
 }
 
@@ -63,11 +107,12 @@ export async function getFood(req: Request, res: Response) {
     res.status(404).json({ success: false, message: '美食不存在' });
     return;
   }
+  const parsedImages = item.images ? JSON.parse(item.images) : [];
   res.json({
     success: true,
     data: {
       ...item,
-      images: item.images ? JSON.parse(item.images) : [],
+      images: patchImages(item.id, parsedImages, LOCAL_FOOD_IMAGES),
     },
   });
 }
@@ -78,10 +123,13 @@ export async function listHeritages(req: Request, res: Response) {
   const items = await prisma.heritage.findMany({ orderBy: { createdAt: 'asc' } });
   res.json({
     success: true,
-    data: items.map((item) => ({
-      ...item,
-      images: item.images ? JSON.parse(item.images) : [],
-    })),
+    data: items.map((item: any) => {
+      const parsedImages = item.images ? JSON.parse(item.images) : [];
+      return {
+        ...item,
+        images: patchImages(item.id, parsedImages, LOCAL_HERITAGE_IMAGES),
+      };
+    }),
   });
 }
 

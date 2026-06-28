@@ -24,22 +24,29 @@ function requestExpectsStream(req: Request): boolean {
 }
 
 async function readStreamBody(stream: Readable, maxBytes = MAX_ERROR_BODY_BYTES): Promise<string> {
-  const chunks: Buffer[] = [];
-  let totalBytes = 0;
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let totalBytes = 0;
 
-  for await (const chunk of stream) {
-    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    totalBytes += buffer.length;
+    stream.on('data', (chunk: Buffer | string) => {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      totalBytes += buffer.length;
 
-    if (totalBytes > maxBytes) {
-      chunks.push(buffer.subarray(0, Math.max(0, buffer.length - (totalBytes - maxBytes))));
-      break;
-    }
+      if (totalBytes > maxBytes) {
+        chunks.push(buffer.subarray(0, Math.max(0, buffer.length - (totalBytes - maxBytes))));
+        stream.destroy();
+        return;
+      }
 
-    chunks.push(buffer);
-  }
+      chunks.push(buffer);
+    });
 
-  return Buffer.concat(chunks).toString('utf8');
+    stream.on('end', () => {
+      resolve(Buffer.concat(chunks).toString('utf8'));
+    });
+
+    stream.on('error', reject);
+  });
 }
 
 function parseResponseBody(body: string, contentType: unknown, fallbackStatus: number, wrapText = false): unknown {
@@ -122,7 +129,7 @@ export function createProxy(serviceName: string, target: string, options?: Proxy
         }
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
-        response.data.pipe(res);
+        response.data.pipe(res as any);
         return;
       }
 

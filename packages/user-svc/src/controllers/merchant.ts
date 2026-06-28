@@ -39,7 +39,7 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       orderBy: { createdAt: 'desc' },
     });
 
-    const data = merchants.map((m) => ({
+    const data = merchants.map((m: any) => ({
       ...m,
       configJson: m.configJson ? JSON.parse(m.configJson) : null,
     }));

@@ -1,5 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 
+// seed 脚本通过 `tsx prisma/seed.ts` 或 `node prisma/seed.js` 运行，
+// 运行时环境一定是 Node.js，这里给 process 一个最小类型声明，避免 IDE 报找不到名称。
+declare const process: { exit(code?: number): void } | undefined;
+
 const prisma = new PrismaClient();
 
 const attractions = [
@@ -21,10 +25,10 @@ const attractions = [
       parking: '景区设有大型停车场，小车收费10元/次',
     }),
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=1',
-      'https://picsum.photos/400/300?random=2',
-      'https://picsum.photos/400/300?random=3',
-      'https://picsum.photos/400/300?random=4',
+      '/static/imgs/longmen.jpg',
+      '/static/imgs/longmen.jpg',
+      '/static/imgs/longmen.jpg',
+      '/static/imgs/longmen.jpg',
     ]),
     latitude: 34.556,
     longitude: 112.471,
@@ -47,8 +51,8 @@ const attractions = [
       parking: '景区南门设有停车场',
     }),
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=5',
-      'https://picsum.photos/400/300?random=6',
+      '/static/imgs/baima.jpg',
+      '/static/imgs/baima.jpg',
     ]),
     latitude: 34.724,
     longitude: 112.606,
@@ -71,9 +75,9 @@ const attractions = [
       parking: '景区大门口设有大型停车场',
     }),
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=7',
-      'https://picsum.photos/400/300?random=8',
-      'https://picsum.photos/400/300?random=9',
+      '/static/imgs/laojun.jpg',
+      '/static/imgs/laojun.jpg',
+      '/static/imgs/laojun.jpg',
     ]),
     latitude: 33.783,
     longitude: 111.865,
@@ -96,8 +100,8 @@ const attractions = [
       parking: '景区入口设有大型停车场',
     }),
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=10',
-      'https://picsum.photos/400/300?random=11',
+      '/static/imgs/baiyun.jpg',
+      '/static/imgs/baiyun.jpg',
     ]),
     latitude: 33.683,
     longitude: 111.85,
@@ -120,8 +124,8 @@ const attractions = [
       parking: '景区周边设有停车位',
     }),
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=12',
-      'https://picsum.photos/400/300?random=13',
+      '/static/imgs/guanlin.jpg',
+      '/static/imgs/guanlin.jpg',
     ]),
     latitude: 34.606,
     longitude: 112.47,
@@ -144,9 +148,9 @@ const attractions = [
       parking: '景区地下设有停车场',
     }),
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=14',
-      'https://picsum.photos/400/300?random=15',
-      'https://picsum.photos/400/300?random=16',
+      '/static/imgs/mingtang.jpg',
+      '/static/imgs/mingtang.jpg',
+      '/static/imgs/mingtang.jpg',
     ]),
     latitude: 34.684,
     longitude: 112.467,
@@ -169,8 +173,8 @@ const attractions = [
       parking: '沿线设有多个临时停车位',
     }),
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=17',
-      'https://picsum.photos/400/300?random=18',
+      '/static/imgs/luopu.jpg',
+      '/static/imgs/luopu.jpg',
     ]),
     latitude: 34.62,
     longitude: 112.44,
@@ -193,8 +197,8 @@ const attractions = [
       parking: '老城区停车位紧张，建议公共交通出行',
     }),
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=19',
-      'https://picsum.photos/400/300?random=20',
+      '/static/imgs/balu.jpg',
+      '/static/imgs/balu.jpg',
     ]),
     latitude: 34.686,
     longitude: 112.47,
@@ -212,8 +216,8 @@ const foods = [
     businessHours: '05:00-11:00',
     averagePrice: '¥15',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=30',
-      'https://picsum.photos/400/300?random=31',
+      '/static/imgs/niurou.jpg',
+      '/static/imgs/niurou.jpg',
     ]),
     latitude: 34.688,
     longitude: 112.472,
@@ -228,8 +232,8 @@ const foods = [
     businessHours: '07:00-21:00',
     averagePrice: '¥12',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=32',
-      'https://picsum.photos/400/300?random=33',
+      '/static/imgs/bufan-tang.jpg',
+      '/static/imgs/bufan-tang.jpg',
     ]),
     latitude: 34.685,
     longitude: 112.468,
@@ -244,9 +248,9 @@ const foods = [
     businessHours: '10:00-14:00, 17:00-21:00',
     averagePrice: '¥80',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=34',
-      'https://picsum.photos/400/300?random=35',
-      'https://picsum.photos/400/300?random=36',
+      '/static/imgs/shui.jpg',
+      '/static/imgs/shui.jpg',
+      '/static/imgs/shui.jpg',
     ]),
     latitude: 34.687,
     longitude: 112.473,
@@ -261,8 +265,8 @@ const foods = [
     businessHours: '06:30-21:30',
     averagePrice: '¥10',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=37',
-      'https://picsum.photos/400/300?random=38',
+      '/static/imgs/jiangmian.jpg',
+      '/static/imgs/jiangmian.jpg',
     ]),
     latitude: 34.68,
     longitude: 112.445,
@@ -277,8 +281,8 @@ const foods = [
     businessHours: '08:00-21:00',
     averagePrice: '¥25',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=39',
-      'https://picsum.photos/400/300?random=40',
+      '/static/imgs/mudan.jpg',
+      '/static/imgs/mudan.jpg',
     ]),
     latitude: 34.682,
     longitude: 112.448,
@@ -293,8 +297,8 @@ const foods = [
     businessHours: '08:00-20:00',
     averagePrice: '¥8',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=41',
-      'https://picsum.photos/400/300?random=42',
+      '/static/imgs/shaobing.jpg',
+      '/static/imgs/shaobing.jpg',
     ]),
     latitude: 34.55,
     longitude: 112.75,
@@ -309,8 +313,8 @@ const foods = [
     businessHours: '06:00-22:00',
     averagePrice: '¥12',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=43',
-      'https://picsum.photos/400/300?random=44',
+      '/static/imgs/hula.jpg',
+      '/static/imgs/hula.jpg',
     ]),
     latitude: 34.679,
     longitude: 112.444,
@@ -325,8 +329,8 @@ const heritages = [
     address: '洛阳市各大牡丹园（王城公园、中国国花园、隋唐城遗址植物园等）',
     level: '省级非遗',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=50',
-      'https://picsum.photos/400/300?random=51',
+      '/static/imgs/peony.jpg',
+      '/static/imgs/peony.jpg',
     ]),
   },
   {
@@ -336,8 +340,8 @@ const heritages = [
     address: '洛阳市孟津区南石山村',
     level: '国家级非遗',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=52',
-      'https://picsum.photos/400/300?random=53',
+      '/static/imgs/sancai.jpg',
+      '/static/imgs/sancai.jpg',
     ]),
   },
   {
@@ -347,8 +351,8 @@ const heritages = [
     address: '洛阳市老城区宫灯厂',
     level: '国家级非遗',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=54',
-      'https://picsum.photos/400/300?random=55',
+      '/static/imgs/deng.jpg',
+      '/static/imgs/deng.jpg',
     ]),
   },
   {
@@ -358,8 +362,8 @@ const heritages = [
     address: '洛阳市各县区文化场馆',
     level: '省级非遗',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=56',
-      'https://picsum.photos/400/300?random=57',
+      '/static/imgs/piying.jpg',
+      '/static/imgs/piying.jpg',
     ]),
   },
   {
@@ -369,8 +373,8 @@ const heritages = [
     address: '洛阳市老城区洛阳铲博物馆',
     level: '市级非遗',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=58',
-      'https://picsum.photos/400/300?random=59',
+      '/static/imgs/luoyangchan.jpg',
+      '/static/imgs/luoyangchan.jpg',
     ]),
   },
   {
@@ -380,8 +384,8 @@ const heritages = [
     address: '洛阳市非物质文化遗产保护中心',
     level: '省级非遗',
     images: JSON.stringify([
-      'https://picsum.photos/400/300?random=60',
-      'https://picsum.photos/400/300?random=61',
+      '/static/imgs/papercut.jpg',
+      '/static/imgs/papercut.jpg',
     ]),
   },
 ];
@@ -415,7 +419,7 @@ async function main() {
 main()
   .catch((e) => {
     console.error(e);
-    process.exit(1);
+    process?.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
