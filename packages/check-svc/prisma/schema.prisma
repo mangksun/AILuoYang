@@ -382,3 +382,95 @@ model OtaSyncLog {
 
   @@map("ota_sync_log")
 }
+
+// ==================== companion (ai-svc) ====================
+
+model RestPlace {
+  id            String   @id @default(uuid())
+  name          String   @db.VarChar(200)
+  category      String   @db.VarChar(50)
+  description   String   @db.Text
+  address       String   @db.VarChar(500)
+  phone         String?  @db.VarChar(50)
+  businessHours String?  @db.VarChar(100) @map("business_hours")
+  images        String?  @db.Text
+  latitude      Float
+  longitude     Float
+  status        String   @default("active") @db.VarChar(20)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("rest_place")
+}
+
+model ShoppingPlace {
+  id            String   @id @default(uuid())
+  name          String   @db.VarChar(200)
+  category      String   @db.VarChar(50)
+  description   String   @db.Text
+  address       String   @db.VarChar(500)
+  phone         String?  @db.VarChar(50)
+  businessHours String?  @db.VarChar(100) @map("business_hours")
+  images        String?  @db.Text
+  latitude      Float
+  longitude     Float
+  status        String   @default("active") @db.VarChar(20)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("shopping_place")
+}
+
+// ==================== city-map (miniapp-svc) ====================
+
+model Attraction {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(200)
+  level       String?  @db.VarChar(10)
+  tags        String?  @db.Text
+  category    String   @db.VarChar(50)
+  description String   @db.Text
+  address     String   @db.VarChar(500)
+  price       String   @db.VarChar(50)
+  phone       String   @db.VarChar(50)
+  facilities  String?  @db.Text
+  traffic     String?  @db.Text
+  images      String?  @db.Text
+  latitude    Float
+  longitude   Float
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("attraction")
+}
+
+model Food {
+  id            String   @id @default(uuid())
+  name          String   @db.VarChar(200)
+  category      String   @db.VarChar(50)
+  description   String   @db.Text
+  address       String   @db.VarChar(500)
+  phone         String   @db.VarChar(50)
+  businessHours String   @db.VarChar(100) @map("business_hours")
+  averagePrice  String   @db.VarChar(50) @map("average_price")
+  images        String?  @db.Text
+  latitude      Float
+  longitude     Float
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("food")
+}
+
+model Heritage {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(200)
+  description String   @db.Text
+  address     String   @db.VarChar(500)
+  level       String   @db.VarChar(50)
+  images      String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("heritage")
+}

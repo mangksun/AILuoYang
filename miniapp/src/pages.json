@@ -45,13 +45,15 @@
     {
       "path": "pages/guide/list",
       "style": {
-        "navigationStyle": "custom"
+        "navigationBarTitleText": "攻略推荐",
+        "navigationStyle": "default"
       }
     },
     {
       "path": "pages/guide/detail",
       "style": {
-        "navigationStyle": "custom"
+        "navigationBarTitleText": "攻略详情",
+        "navigationStyle": "default"
       }
     },
     {
@@ -71,6 +73,20 @@
       "path": "pages/user-center/index",
       "style": {
         "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/companion/index",
+      "style": {
+        "navigationBarTitleText": "AI伴游",
+        "navigationStyle": "default"
+      }
+    },
+    {
+      "path": "pages/companion/map",
+      "style": {
+        "navigationBarTitleText": "附近地点",
+        "navigationStyle": "default"
       }
     }
   ],

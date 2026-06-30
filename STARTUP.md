@@ -4,6 +4,7 @@
 
 - Node.js 18+
 - npm（随 Node.js 安装）
+- Python 3.10+（用于 ai-svc）
 - MySQL（已运行，端口 3306）
 - Redis（已运行，端口 6379）
 
@@ -85,7 +86,10 @@ cd packages/ota-svc && npx ts-node-dev --respawn src/app.ts
 # 终端 7 - 小程序服务 (:3006)
 cd packages/miniapp-svc && npx ts-node-dev --respawn src/app.ts
 
-# 终端 8 - 管理后台前端 (:8080)
+# 终端 8 - AI 服务 (:3010)
+cd packages/ai-svc && python -m uvicorn app.main:app --host 0.0.0.0 --port 3010 --reload
+
+# 终端 9 - 管理后台前端 (:8080)
 cd web-admin && npx vite --host
 ```
 
@@ -103,6 +107,7 @@ cd web-admin && npx vite --host
 | 检票服务 | http://localhost:3004 |
 | OTA 服务 | http://localhost:3005 |
 | 小程序服务 | http://localhost:3006 |
+| AI 服务 | http://localhost:3010 |
 
 ## 常见问题
 

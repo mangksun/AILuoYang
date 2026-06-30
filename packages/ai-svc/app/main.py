@@ -75,6 +75,13 @@ class TravelogueGenerateRequest(BaseModel):
     experience: str = Field(default="", max_length=5000)
 
 
+class CompanionChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=2000)
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    chat_history: list[dict[str, Any]] = Field(default_factory=list)
+
+
 def convert_chat_history(chat_history: list[dict[str, Any]]) -> list[BaseMessage]:
     messages: list[BaseMessage] = []
 
@@ -93,6 +100,73 @@ def convert_chat_history(chat_history: list[dict[str, Any]]) -> list[BaseMessage
             messages.append(SystemMessage(content=content))
 
     return messages[:20]
+
+
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """计算两点之间的距离（米），使用 Haversine 公式"""
+    import math
+    R = 6371000  # 地球半径（米）
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+
+    a = math.sin(delta_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return R * c
+
+
+def get_nearby_pois(latitude: float, longitude: float, poi_type: str, radius: int = 1000, limit: int = 20) -> list[dict[str, Any]]:
+    """查询附近的POI"""
+    table_map = {
+        "attraction": "attraction",
+        "food": "food",
+        "rest": "rest_place",
+        "shopping": "shopping_place",
+    }
+    table = table_map.get(poi_type)
+    if not table:
+        return []
+
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            # 查询所有 POI（不检查 status 列，因为部分表没有这个列）
+            cursor.execute(f"SELECT * FROM {table}")
+            rows = cursor.fetchall()
+
+    # 计算距离并过滤
+    result = []
+    for row in rows:
+        # 跳过状态为 disabled 的记录（如果有 status 列）
+        if row.get("status") == "disabled":
+            continue
+        lat = float(row.get("latitude", 0))
+        lon = float(row.get("longitude", 0))
+        if lat == 0 or lon == 0:
+            continue
+        distance = calculate_distance(latitude, longitude, lat, lon)
+        if distance <= radius:
+            row["distance"] = round(distance)
+            # 解析 JSON 字段
+            for field in ["images", "tags", "facilities", "traffic"]:
+                if field in row and row[field]:
+                    try:
+                        row[field] = json.loads(row[field])
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+            # 确保所有字符串字段都是 UTF-8 编码
+            for key, value in row.items():
+                if isinstance(value, bytes):
+                    try:
+                        row[key] = value.decode('utf-8')
+                    except UnicodeDecodeError:
+                        row[key] = value.decode('latin-1')
+            result.append(row)
+
+    # 按距离排序
+    result.sort(key=lambda x: x["distance"])
+    return result[:limit]
 
 
 def ok(data: Any = None, message: str = "success") -> dict[str, Any]:
@@ -932,3 +1006,165 @@ async def update_knowledge(item_id: int, request: KnowledgeRequest) -> dict[str,
                 ),
             )
     return ok({"id": item_id})
+
+
+# ==================== AI 伴游接口 ====================
+
+
+@app.get("/api/ai/companion/nearby")
+async def companion_nearby(
+    type: str,
+    latitude: float,
+    longitude: float,
+    radius: int = 1000,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """查询附近POI"""
+    try:
+        if type not in ("attraction", "food", "rest", "shopping"):
+            return {"code": 400, "message": "type 参数无效，可选：attraction/food/rest/shopping", "data": None}
+
+        pois = get_nearby_pois(latitude, longitude, type, radius, limit)
+        return ok({"list": pois, "total": len(pois), "type": type})
+    except Exception as e:
+        print(f"[nearby] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"code": 500, "message": str(e), "data": None}
+
+
+@app.get("/api/ai/companion/reverse-geocode")
+async def reverse_geocode(latitude: float, longitude: float) -> dict[str, Any]:
+    """逆地理编码，获取位置名称"""
+    import httpx
+
+    api_key = os.getenv("AMAP_KEY", "5e497098fb774c21bd0dee99fd11c904")
+    location = f"{longitude},{latitude}"
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                "https://restapi.amap.com/v3/geocode/regeo",
+                params={
+                    "key": api_key,
+                    "location": location,
+                    "extensions": "base",
+                },
+            )
+            data = resp.json()
+
+        if data.get("status") == "1" and data.get("regeocode"):
+            address = data["regeocode"].get("formatted_address", "")
+            address_component = data["regeocode"].get("addressComponent", {})
+            district = address_component.get("district", "")
+            return ok({
+                "address": address,
+                "district": district,
+                "province": address_component.get("province", ""),
+                "city": address_component.get("city", ""),
+            })
+    except Exception as e:
+        print(f"[reverse-geocode] Error: {e}")
+
+    return ok({"address": "洛阳", "district": "洛阳"})
+
+
+async def search_nearby_pois(latitude: float, longitude: float, types: str, radius: int = 2000, limit: int = 10) -> list[dict[str, Any]]:
+    """调用高德POI搜索API获取附近地点"""
+    import httpx
+
+    api_key = os.getenv("AMAP_KEY", "171676a3687c77f79c40bb81e17dca9e")
+    location = f"{longitude},{latitude}"
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                "https://restapi.amap.com/v3/place/around",
+                params={
+                    "key": api_key,
+                    "location": location,
+                    "radius": radius,
+                    "types": types,
+                    "offset": limit,
+                    "page": 1,
+                    "extensions": "base",
+                },
+            )
+            data = resp.json()
+
+        if data.get("status") == "1" and data.get("pois"):
+            result = []
+            for poi in data["pois"]:
+                result.append({
+                    "name": poi.get("name", ""),
+                    "address": poi.get("address", ""),
+                    "distance": poi.get("distance", ""),
+                    "type": poi.get("type", ""),
+                    "tel": poi.get("tel", ""),
+                })
+            return result
+    except Exception as e:
+        print(f"[search_nearby_pois] Error: {e}", file=__import__('sys').stderr)
+
+    return []
+
+
+@app.post("/api/ai/companion/chat")
+async def companion_chat(request: CompanionChatRequest) -> dict[str, Any]:
+    """伴游对话接口 - 后端调用高德POI搜索"""
+    try:
+        started_at = time.perf_counter()
+
+        # 调用高德POI搜索API查询附近地点
+        nearby_foods = await search_nearby_pois(request.latitude, request.longitude, "050000", 2000, 5)
+        nearby_spots = await search_nearby_pois(request.latitude, request.longitude, "110000", 2000, 5)
+        nearby_hotels = await search_nearby_pois(request.latitude, request.longitude, "100000", 2000, 3)
+        nearby_shopping = await search_nearby_pois(request.latitude, request.longitude, "060000|070000", 2000, 3)
+
+        # 构造位置上下文
+        location_context = ""
+        if nearby_foods:
+            location_context += "附近美食：" + "、".join([f"{f['name']}({f['distance']}米)" for f in nearby_foods]) + "\n"
+        if nearby_spots:
+            location_context += "附近景点：" + "、".join([f"{s['name']}({s['distance']}米)" for s in nearby_spots]) + "\n"
+        if nearby_hotels:
+            location_context += "附近住宿：" + "、".join([f"{h['name']}({h['distance']}米)" for h in nearby_hotels]) + "\n"
+        if nearby_shopping:
+            location_context += "附近购物：" + "、".join([f"{s['name']}({s['distance']}米)" for s in nearby_shopping]) + "\n"
+
+        # 构造 system prompt
+        system_prompt = f"""你是智能旅游助手"洛灵儿"，正在为用户提供实时伴游服务。
+
+用户当前位置：纬度 {request.latitude}，经度 {request.longitude}
+
+以下是用户附近的真实POI数据（来自高德地图）：
+{location_context if location_context else "暂未查询到附近POI信息。"}
+
+重要指令：
+1. 你必须基于上述真实POI数据回答用户问题，不要推荐数据中没有的地点
+2. 如果用户询问附近有什么，直接列出上述POI数据中的地点名称和距离
+3. 回答要简洁、友好、实用
+4. 使用中文回答"""
+
+        chat_history = convert_chat_history(request.chat_history)
+
+        reply_parts: list[str] = []
+        async for packet in get_ai_response(request.message, chat_history, system_prompt):
+            if packet.get("type") == "text" and packet.get("content"):
+                reply_parts.append(str(packet["content"]))
+
+        reply = "".join(reply_parts)
+        if not reply:
+            reply = "抱歉，我暂时无法回答这个问题，请稍后再试。"
+
+        latency_ms = int((time.perf_counter() - started_at) * 1000)
+        chat_log_id = insert_chat_log(request.message, reply, [], latency_ms, "companion")
+
+        return ok({
+            "reply": reply,
+            "chatLogId": chat_log_id,
+        })
+    except Exception as e:
+        import sys
+        print(f"[companion] Error: {e}", file=sys.stderr)
+        return {"code": 500, "message": "服务器内部错误", "data": None}

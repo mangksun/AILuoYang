@@ -63,7 +63,7 @@ const tabBarPaths = [
 ];
 
 const bentoItems = [
-  { title: 'AI伴游', desc: '到景自动讲解', icon: '游', path: '' },
+  { title: 'AI伴游', desc: '到景自动讲解', icon: '游', path: '/pages/companion/index' },
   { title: '行程定制', desc: '预算天数生成路线', icon: '程', path: '/pages/itinerary/index' },
   { title: '旅行游记', desc: 'AI 创作专属游记', icon: '记', path: '/pages/travelogue/index' },
   { title: '便捷购票', desc: '真实票种在线下单', icon: '票', path: '/pages/ticket/index' },

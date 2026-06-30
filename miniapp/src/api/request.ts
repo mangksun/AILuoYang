@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:3000/api';
+export const API_BASE_URL = 'http://10.70.119.141:3000/api';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 

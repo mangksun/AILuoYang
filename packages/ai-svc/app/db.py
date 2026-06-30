@@ -2,11 +2,22 @@ from __future__ import annotations
 
 import os
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Any, Iterator
 from urllib.parse import urlparse
 
 import pymysql
 from pymysql.cursors import DictCursor
+
+# 加载 .env 文件
+env_path = Path(__file__).resolve().parent.parent.parent.parent / '.env'
+if env_path.exists():
+    with open(env_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ.setdefault(key.strip(), value.strip())
 
 
 def _database_config() -> dict[str, Any]:
