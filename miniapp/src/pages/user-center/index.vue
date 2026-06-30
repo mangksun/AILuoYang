@@ -40,8 +40,8 @@
     </view>
 
     <view v-if="user.token" class="menu-card tang-card">
-      <view v-for="item in menus" :key="item" class="menu-item">
-        <text>{{ item }}</text>
+      <view v-for="item in menus" :key="item.label" class="menu-item" @tap="onMenuTap(item)">
+        <text>{{ item.label }}</text>
         <text class="arrow">›</text>
       </view>
     </view>
@@ -73,7 +73,21 @@ import { useUserStore } from '@/stores/user';
 
 const user = useUserStore();
 const ticket = useTicketStore();
-const menus = ['我的收藏', '我的问题', '我的攻略', '旅记写作', '设置'];
+const menus = [
+  { label: '我的收藏', url: '' },
+  { label: '我的问题', url: '/pages/questions/index' },
+  { label: '我的攻略', url: '' },
+  { label: '旅记写作', url: '' },
+  { label: '设置', url: '' },
+];
+
+function onMenuTap(item: { label: string; url: string }) {
+  if (item.url) {
+    uni.navigateTo({ url: item.url });
+  } else {
+    uni.showToast({ title: '即将开放', icon: 'none' });
+  }
+}
 
 const showProfileSetup = ref(false);
 const pendingNickname = ref('');

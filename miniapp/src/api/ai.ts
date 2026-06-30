@@ -230,3 +230,24 @@ export function generateItinerary(data: ItineraryRequest) {
     data: payload,
   });
 }
+
+export interface ChatLogItem {
+  id: number;
+  user_input: string;
+  ai_reply: string;
+  intent: string | null;
+  created_at: string;
+}
+
+export interface ChatLogPage {
+  list: ChatLogItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export function getMyChatLogs(page = 1, pageSize = 20) {
+  return request<ChatLogPage>('/ai/chat-logs', {
+    params: { page, pageSize },
+  });
+}

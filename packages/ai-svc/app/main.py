@@ -6,7 +6,7 @@ import re
 import time
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
@@ -670,6 +670,7 @@ def insert_chat_log(
     actions: list[dict[str, Any]],
     latency_ms: int,
     status: str = "success",
+    user_id: int | None = None,
 ) -> int | None:
     try:
         with get_connection() as conn:
@@ -677,8 +678,8 @@ def insert_chat_log(
                 cursor.execute(
                     """
                     INSERT INTO ai_chat_log
-                      (user_input, ai_reply, intent, actions_json, latency_ms, status)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                      (user_input, ai_reply, intent, actions_json, latency_ms, status, user_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         user_input,
@@ -687,6 +688,7 @@ def insert_chat_log(
                         json.dumps(actions, ensure_ascii=False),
                         latency_ms,
                         status,
+                        user_id,
                     ),
                 )
                 return int(cursor.lastrowid)
@@ -727,10 +729,15 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
 
 
 @app.post("/api/ai/chat")
-async def chat(request: LegacyChatRequest) -> dict[str, Any]:
+async def chat(
+    request: LegacyChatRequest,
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+) -> dict[str, Any]:
     user_input = request.user_input or request.message
     if not user_input:
         return {"code": 400, "message": "user_input/message 不能为空", "data": None}
+
+    user_id = int(x_user_id) if x_user_id and x_user_id.isdigit() else None
 
     started_at = time.perf_counter()
     chat_history = convert_chat_history(request.chat_history)
@@ -761,7 +768,7 @@ async def chat(request: LegacyChatRequest) -> dict[str, Any]:
         reply = "我刚刚没有收到有效回复，请稍后再试。"
 
     latency_ms = int((time.perf_counter() - started_at) * 1000)
-    chat_log_id = insert_chat_log(user_input, reply, actions, latency_ms)
+    chat_log_id = insert_chat_log(user_input, reply, actions, latency_ms, user_id=user_id)
 
     return ok(
         {
@@ -849,6 +856,47 @@ async def admin_overview() -> dict[str, Any]:
 @app.get("/api/ai/admin/chat-logs")
 async def list_chat_logs(page: int = 1, pageSize: int = 20) -> dict[str, Any]:
     return ok(paginated_query("ai_chat_log", page, pageSize))
+
+
+@app.get("/api/ai/chat-logs")
+async def my_chat_logs(
+    page: int = 1,
+    pageSize: int = 20,
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+) -> dict[str, Any]:
+    if not x_user_id or not x_user_id.isdigit():
+        return {"code": 401, "message": "需要登录", "data": None}
+
+    user_id = int(x_user_id)
+    safe_page = max(1, page)
+    safe_page_size = min(max(1, pageSize), 100)
+    offset = (safe_page - 1) * safe_page_size
+
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) AS total FROM ai_chat_log WHERE user_id = %s",
+                (user_id,),
+            )
+            total = cursor.fetchone()["total"]
+            cursor.execute(
+                """
+                SELECT id, user_input, ai_reply, intent, created_at
+                FROM ai_chat_log
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                LIMIT %s OFFSET %s
+                """,
+                (user_id, safe_page_size, offset),
+            )
+            rows = cursor.fetchall()
+
+    return ok({
+        "list": rows,
+        "total": total,
+        "page": safe_page,
+        "pageSize": safe_page_size,
+    })
 
 
 @app.post("/api/ai/admin/feedback")
@@ -1110,9 +1158,13 @@ async def search_nearby_pois(latitude: float, longitude: float, types: str, radi
 
 
 @app.post("/api/ai/companion/chat")
-async def companion_chat(request: CompanionChatRequest) -> dict[str, Any]:
+async def companion_chat(
+    request: CompanionChatRequest,
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+) -> dict[str, Any]:
     """伴游对话接口 - 后端调用高德POI搜索"""
     try:
+        user_id = int(x_user_id) if x_user_id and x_user_id.isdigit() else None
         started_at = time.perf_counter()
 
         # 调用高德POI搜索API查询附近地点
@@ -1158,7 +1210,7 @@ async def companion_chat(request: CompanionChatRequest) -> dict[str, Any]:
             reply = "抱歉，我暂时无法回答这个问题，请稍后再试。"
 
         latency_ms = int((time.perf_counter() - started_at) * 1000)
-        chat_log_id = insert_chat_log(request.message, reply, [], latency_ms, "companion")
+        chat_log_id = insert_chat_log(request.message, reply, [], latency_ms, "companion", user_id=user_id)
 
         return ok({
             "reply": reply,

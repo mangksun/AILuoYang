@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { authMiddleware } from './middleware/auth';
+import { authMiddleware, optionalAuth } from './middleware/auth';
 import { rateLimiter } from './middleware/rateLimit';
 import { createProxy } from './routes/proxy';
 import { errorHandler } from './middleware/errorHandler';
@@ -29,7 +29,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', createProxy('user-svc', process.env.USER_SVC_URL || 'http://localhost:3003'));
 app.use('/api/miniapp', createProxy('miniapp-svc', process.env.MINIAPP_SVC_URL || 'http://localhost:3006'));
 app.use('/api/ai/admin', authMiddleware, createProxy('ai-svc', process.env.AI_SVC_URL || 'http://localhost:3010'));
-app.use('/api/ai', createProxy('ai-svc', process.env.AI_SVC_URL || 'http://localhost:3010'));
+app.use('/api/ai', optionalAuth, createProxy('ai-svc', process.env.AI_SVC_URL || 'http://localhost:3010'));
 
 // 需要鉴权的路由
 app.use('/api/ticket-types', authMiddleware, createProxy('ticket-svc', process.env.TICKET_SVC_URL || 'http://localhost:3001'));

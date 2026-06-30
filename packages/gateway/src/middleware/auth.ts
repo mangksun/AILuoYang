@@ -47,3 +47,24 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     res.status(401).json({ code: 401, message: '令牌无效或已过期', data: null });
   }
 }
+
+export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    next();
+    return;
+  }
+
+  const token = authHeader.substring(7);
+  const secret = process.env.JWT_SECRET || 'default-secret';
+
+  try {
+    const payload = jwt.verify(token, secret as jwt.Secret) as AuthPayload;
+    req.user = payload;
+  } catch {
+    // token 无效时静默忽略，不影响请求
+  }
+
+  next();
+}
