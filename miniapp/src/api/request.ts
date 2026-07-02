@@ -1,10 +1,6 @@
-<<<<<<< Updated upstream
-export const API_BASE_URL = 'http://10.70.119.141:3000/api';
-=======
 import { API_BASE_URL } from '@/config/endpoints';
 
 export { API_BASE_URL };
->>>>>>> Stashed changes
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -84,5 +80,3 @@ export async function request<T = any>(path: string, options: RequestOptions = {
     });
   });
 }
-
-
