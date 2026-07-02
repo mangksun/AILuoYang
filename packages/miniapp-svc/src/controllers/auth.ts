@@ -76,6 +76,7 @@ export async function profile(req: Request, res: Response, next: NextFunction) {
 const updateProfileSchema = Joi.object({
   nickname: Joi.string().max(100).allow('', null).optional(),
   avatarUrl: Joi.string().max(500).allow('', null).optional(),
+  phone: Joi.string().max(20).allow('', null).optional(),
 });
 
 export async function updateProfile(req: Request, res: Response, next: NextFunction) {
@@ -91,6 +92,7 @@ export async function updateProfile(req: Request, res: Response, next: NextFunct
       data: {
         ...(value.nickname !== undefined && { nickname: value.nickname }),
         ...(value.avatarUrl !== undefined && { avatarUrl: value.avatarUrl }),
+        ...(value.phone !== undefined && { phone: value.phone }),
       },
     });
 

@@ -107,6 +107,12 @@
       "style": {
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/user-center/settings",
+      "style": {
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

@@ -9,6 +9,28 @@ interface RequestOptions {
   auth?: boolean;
 }
 
+export function uploadFile(filePath: string, dir = 'avatars'): Promise<{ url: string }> {
+  const token = uni.getStorageSync('token');
+  return new Promise((resolve, reject) => {
+    uni.uploadFile({
+      url: `${API_BASE_URL}/miniapp/upload`,
+      filePath,
+      name: 'file',
+      formData: { dir },
+      header: token ? { Authorization: `Bearer ${token}` } : {},
+      success: (res) => {
+        const body = JSON.parse(res.data);
+        if (body?.code === 0) {
+          resolve(body.data);
+        } else {
+          reject(new Error(body?.message || '上传失败'));
+        }
+      },
+      fail: (err) => reject(err),
+    });
+  });
+}
+
 export function buildUrl(path: string, params?: Record<string, any>) {
   const normalized = path.startsWith('/') ? path : `/${path}`;
   const url = `${API_BASE_URL}${normalized}`;

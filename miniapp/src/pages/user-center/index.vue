@@ -83,7 +83,7 @@ const menus = [
   { label: '我的问题', url: '/pages/questions/index' },
   { label: '我的攻略', url: '' },
   { label: '旅记写作', url: '' },
-  { label: '设置', url: '' },
+  { label: '设置', url: '/pages/user-center/settings' },
 ];
 
 function onMenuTap(item: { label: string; url: string }) {

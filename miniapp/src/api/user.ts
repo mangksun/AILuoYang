@@ -22,7 +22,7 @@ export function getProfile() {
   return request<MiniappUser>('/miniapp/auth/profile');
 }
 
-export function updateProfile(data: { nickname?: string; avatarUrl?: string }) {
+export function updateProfile(data: { nickname?: string; avatarUrl?: string; phone?: string }) {
   return request<MiniappUser>('/miniapp/auth/profile', {
     method: 'PUT',
     data,

@@ -104,14 +104,18 @@ export function createProxy(serviceName: string, target: string, options?: Proxy
         if (u.openid) headers['X-Openid'] = u.openid;
       }
 
+      const isMultipart = (req.headers['content-type'] || '').includes('multipart/form-data');
+
       const response = await axios({
         method: req.method as any,
         url,
         headers,
-        data: req.body,
+        data: isMultipart ? req : req.body,
         timeout: requestExpectsStream(req) ? 0 : timeoutMs,
         responseType: 'stream',
         validateStatus: () => true,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
       });
 
       const contentType = response.headers['content-type'];

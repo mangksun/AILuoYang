@@ -16,15 +16,18 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "ali-oss": "^6.21.0",
     "axios": "^1.6.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "joi": "^17.11.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
+    "@types/multer": "^2.2.0",
     "@types/node": "^20.19.41",
     "prisma": "^5.22.0",
     "ts-node-dev": "^2.0.0",
