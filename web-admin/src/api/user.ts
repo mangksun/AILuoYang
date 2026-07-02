@@ -19,3 +19,11 @@ export function createMerchant(data: any) {
 export function updateMerchantConfig(id: number, data: any) {
   return request.put(`/merchants/${id}/config`, data);
 }
+
+export function getMiniappUsers(params?: any) {
+  return request.get('/miniapp/admin/users', { params });
+}
+
+export function updateMiniappUser(id: number, data: any) {
+  return request.put(`/miniapp/admin/users/${id}`, data);
+}

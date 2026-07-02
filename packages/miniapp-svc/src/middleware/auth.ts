@@ -7,6 +7,7 @@ export interface MiniappJwtPayload {
   userId: number;
   userType: 'miniapp';
   openid: string;
+  role: string;
 }
 
 declare global {

@@ -5,6 +5,10 @@ import * as checkClient from '../services/checkClient';
 import * as orderClient from '../services/orderClient';
 import * as ticketClient from '../services/ticketClient';
 import * as wxPay from '../services/wxPay';
+import axios from 'axios';
+import { unwrap } from '../utils/unwrap';
+
+const CHECK_SVC_URL = process.env.CHECK_SVC_URL || 'http://localhost:3004';
 
 const createSchema = Joi.object({
   ticketTypeId: Joi.number().integer().required(),
@@ -105,6 +109,45 @@ export async function list(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export async function pay(req: Request, res: Response, next: NextFunction) {
+  try {
+    const orderId = Number(req.params.id);
+    const order = await orderClient.getOrder(orderId);
+
+    if (order.userId !== req.user!.userId || order.channel !== 'miniapp') {
+      res.status(404).json({ code: 404, message: '订单不存在', data: null });
+      return;
+    }
+
+    if (order.payStatus === 'paid') {
+      res.json({ code: 0, message: '订单已支付', data: order });
+      return;
+    }
+
+    if (order.status !== 'pending') {
+      res.status(400).json({ code: 400, message: '订单状态不允许支付', data: null });
+      return;
+    }
+
+    // 标记已支付
+    await orderClient.markPaid(orderId, {});
+
+    // 创建核销凭证
+    await checkClient.createVerification({ orderId });
+
+    // 更新本地支付记录
+    await prisma.miniappPayment.updateMany({
+      where: { orderId },
+      data: { status: 'paid', paidAt: new Date() },
+    });
+
+    const updated = await orderClient.getOrder(orderId);
+    res.json({ code: 0, message: '支付成功', data: updated });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getById(req: Request, res: Response, next: NextFunction) {
   try {
     const order = await orderClient.getOrder(Number(req.params.id));
@@ -131,6 +174,41 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
       },
     });
   } catch (err) {
+    next(err);
+  }
+}
+
+export async function staffCheck(req: Request, res: Response, next: NextFunction) {
+  try {
+    if (req.user!.role !== 'staff') {
+      res.status(403).json({ code: 403, message: '无核销权限', data: null });
+      return;
+    }
+
+    const { orderId, projectId, gateId, checkType } = req.body;
+    if (!orderId) {
+      res.status(400).json({ code: 400, message: '缺少 orderId', data: null });
+      return;
+    }
+
+    const response = await axios.post(`${CHECK_SVC_URL}/api/check`, {
+      orderId,
+      projectId: projectId || null,
+      gateId: gateId || null,
+      checkType: checkType || 'entry',
+      verifiedBy: req.user!.userId,
+    });
+    const checkData = unwrap(response);
+    if (checkData.success) {
+      res.json({ code: 0, message: '核销成功', data: checkData });
+    } else {
+      res.json({ code: 0, message: checkData.checkRecord?.failReason || '核销失败', data: checkData });
+    }
+  } catch (err: any) {
+    if (err.response) {
+      res.status(err.response.status).json(err.response.data);
+      return;
+    }
     next(err);
   }
 }

@@ -5,6 +5,7 @@ import ticketRoutes from './routes/ticket';
 import orderRoutes from './routes/order';
 import paymentRoutes from './routes/payment';
 import cityMapRoutes from './routes/cityMap';
+import adminUserRoutes from './routes/adminUser';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config({ path: '../../.env' });
@@ -23,6 +24,7 @@ app.use('/api/miniapp/tickets', ticketRoutes);
 app.use('/api/miniapp/orders', orderRoutes);
 app.use('/api/miniapp/payments', paymentRoutes);
 app.use('/api/miniapp/city-map', cityMapRoutes);
+app.use('/api/miniapp/admin/users', adminUserRoutes);
 
 app.use(errorHandler);
 

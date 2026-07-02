@@ -77,6 +77,14 @@
           <span>AI 后台</span>
         </el-menu-item>
 
+        <el-sub-menu index="miniapp">
+          <template #title>
+            <el-icon><ChatDotRound /></el-icon>
+            <span>小程序管理</span>
+          </template>
+          <el-menu-item index="/miniapp/users">小程序用户</el-menu-item>
+        </el-sub-menu>
+
         <el-sub-menu index="system">
           <template #title>
             <el-icon><Setting /></el-icon>

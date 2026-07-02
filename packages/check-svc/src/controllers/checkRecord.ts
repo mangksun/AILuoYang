@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../prisma/client';
+import { getOrder } from '../services/orderClient';
 
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
@@ -25,10 +26,25 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       prisma.checkRecord.count({ where }),
     ]);
 
+    // 批量获取订单号
+    const orderIds = [...new Set(list.map((r: any) => r.orderId))];
+    const orderMap = new Map<number, string>();
+    await Promise.all(
+      orderIds.map(async (id) => {
+        const order = await getOrder(id);
+        if (order?.orderNo) orderMap.set(id, order.orderNo);
+      }),
+    );
+
+    const enriched = list.map((r: any) => ({
+      ...r,
+      orderNo: orderMap.get(r.orderId) || null,
+    }));
+
     res.json({
       code: 0,
       message: 'success',
-      data: { list, total, page: pageNumber, pageSize: pageSizeNumber },
+      data: { list: enriched, total, page: pageNumber, pageSize: pageSizeNumber },
     });
   } catch (err) {
     next(err);

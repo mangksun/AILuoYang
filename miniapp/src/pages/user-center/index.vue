@@ -39,6 +39,11 @@
       </view>
     </view>
 
+    <view v-if="user.token && user.user?.role === 'staff'" class="staff-card tang-card" @tap="goStaffVerify">
+      <text>扫码核销</text>
+      <text class="arrow">›</text>
+    </view>
+
     <view v-if="user.token" class="menu-card tang-card">
       <view v-for="item in menus" :key="item.label" class="menu-item" @tap="onMenuTap(item)">
         <text>{{ item.label }}</text>
@@ -52,7 +57,7 @@
         <button @tap="loadOrders">刷新</button>
       </view>
       <view v-if="!ticket.orders.length" class="empty">暂无订单</view>
-      <view v-for="order in ticket.orders" :key="order.id" class="order-item">
+      <view v-for="order in ticket.orders" :key="order.id" class="order-item" @tap="goOrderDetail(order.id)">
         <view>
           <view class="order-no">{{ order.orderNo }}</view>
           <view class="order-meta">{{ ticketName(order.ticketTypeId) }} · {{ visitorLabel(order.visitorCategory) }}</view>
@@ -159,6 +164,14 @@ function logout() {
 
 function ticketName(ticketTypeId: number) {
   return ticket.tickets.find((item) => item.id === ticketTypeId)?.name || `票种 ${ticketTypeId}`;
+}
+
+function goOrderDetail(id: number) {
+  uni.navigateTo({ url: `/pages/order/detail?id=${id}` });
+}
+
+function goStaffVerify() {
+  uni.navigateTo({ url: '/pages/staff/verify' });
 }
 
 function visitorLabel(category?: string) {
@@ -307,10 +320,21 @@ function visitorLabel(category?: string) {
 }
 
 .menu-card,
-.order-card {
+.order-card,
+.staff-card {
   padding: 8rpx 28rpx;
   margin-top: 24rpx;
   background: rgba(255,255,255,0.92);
+}
+
+.staff-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 96rpx;
+  color: $shendu-red;
+  font-size: 30rpx;
+  font-weight: 800;
 }
 
 .menu-item {

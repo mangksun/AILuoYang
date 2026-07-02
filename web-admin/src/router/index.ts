@@ -109,6 +109,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/ai/admin.vue'),
         meta: { title: 'AI 后台', icon: 'Monitor' },
       },
+      // 小程序管理
+      {
+        path: 'miniapp/users',
+        name: 'MiniappUsers',
+        component: () => import('@/views/miniapp/user.vue'),
+        meta: { title: '小程序用户', icon: 'UserFilled' },
+      },
       // 系统设置
       {
         path: 'system/users',

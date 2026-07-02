@@ -63,3 +63,11 @@ export function getOrders(params?: Record<string, any>) {
 export function getOrder(id: number) {
   return request<MiniappOrder>(`/miniapp/orders/${id}`);
 }
+
+export function payOrder(id: number) {
+  return request<MiniappOrder>(`/miniapp/orders/${id}/pay`, { method: 'POST' });
+}
+
+export function staffCheck(data: { orderId: number; checkType?: string }) {
+  return request<any>('/miniapp/orders/staff-check', { method: 'POST', data });
+}

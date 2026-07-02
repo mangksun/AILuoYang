@@ -6,6 +6,7 @@ export interface MiniappUser {
   phone?: string;
   nickname?: string;
   avatarUrl?: string;
+  role: string;
   status: string;
 }
 

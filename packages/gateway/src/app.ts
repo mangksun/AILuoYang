@@ -27,6 +27,7 @@ app.get('/health', (_req, res) => {
 
 // 公开路由（无需鉴权）
 app.use('/api/auth', createProxy('user-svc', process.env.USER_SVC_URL || 'http://localhost:3003'));
+app.use('/api/miniapp/admin', authMiddleware, createProxy('miniapp-svc', process.env.MINIAPP_SVC_URL || 'http://localhost:3006'));
 app.use('/api/miniapp', createProxy('miniapp-svc', process.env.MINIAPP_SVC_URL || 'http://localhost:3006'));
 app.use('/api/ai/admin', authMiddleware, createProxy('ai-svc', process.env.AI_SVC_URL || 'http://localhost:3010'));
 app.use('/api/ai', optionalAuth, createProxy('ai-svc', process.env.AI_SVC_URL || 'http://localhost:3010'));

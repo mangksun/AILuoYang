@@ -40,16 +40,28 @@
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="orderId" label="订单ID" width="120" />
-      <el-table-column prop="projectId" label="项目ID" width="120" />
-      <el-table-column prop="gateId" label="闸机ID" width="120" />
-      <el-table-column prop="checkType" label="检票类型" width="120">
+      <el-table-column prop="id" label="ID" width="70" />
+      <el-table-column label="订单号" width="180">
+        <template #default="{ row }">
+          {{ row.orderNo || row.orderId }}
+        </template>
+      </el-table-column>
+      <el-table-column label="项目" width="120">
+        <template #default="{ row }">
+          {{ row.projectId ? `项目${row.projectId}` : '入场检票' }}
+        </template>
+      </el-table-column>
+      <el-table-column label="闸机" width="100">
+        <template #default="{ row }">
+          {{ row.gateId || '-' }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="checkType" label="检票类型" width="100">
         <template #default="{ row }">
           {{ row.checkType === 'entry' ? '入场检票' : '项目检票' }}
         </template>
       </el-table-column>
-      <el-table-column prop="result" label="结果" width="100">
+      <el-table-column prop="result" label="结果" width="80">
         <template #default="{ row }">
           <el-tag :type="row.result === 'success' ? 'success' : 'danger'">
             {{ row.result === 'success' ? '成功' : '失败' }}
@@ -57,7 +69,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="failReason" label="失败原因" min-width="150" />
-      <el-table-column prop="checkTime" label="检票时间" width="180" />
+      <el-table-column prop="checkedAt" label="检票时间" width="180" />
     </el-table>
 
     <div class="pagination-container">

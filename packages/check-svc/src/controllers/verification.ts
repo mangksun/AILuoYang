@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../prisma/client';
+import { getOrder } from '../services/orderClient';
 
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
@@ -46,10 +47,36 @@ export async function list(req: Request, res: Response, next: NextFunction) {
       prisma.verification.count({ where }),
     ]);
 
+    // 批量获取订单号
+    const orderIds = [...new Set(list.map((r: any) => r.orderId))];
+    const orderMap = new Map<number, string>();
+    await Promise.all(
+      orderIds.map(async (id) => {
+        const order = await getOrder(id);
+        if (order?.orderNo) orderMap.set(id, order.orderNo);
+      }),
+    );
+
+    // 批量获取核销人昵称
+    const verifierIds = [...new Set(list.map((r: any) => r.verifiedBy).filter(Boolean))];
+    const verifierMap = new Map<number, string>();
+    await Promise.all(
+      verifierIds.map(async (id) => {
+        const user = await prisma.miniappUser.findUnique({ where: { id }, select: { nickname: true } });
+        if (user?.nickname) verifierMap.set(id, user.nickname);
+      }),
+    );
+
+    const enriched = list.map((r: any) => ({
+      ...r,
+      orderNo: orderMap.get(r.orderId) || null,
+      verifierName: r.verifiedBy ? (verifierMap.get(r.verifiedBy) || `用户${r.verifiedBy}`) : null,
+    }));
+
     res.json({
       code: 0,
       message: 'success',
-      data: { list, total, page: pageNumber, pageSize: pageSizeNumber },
+      data: { list: enriched, total, page: pageNumber, pageSize: pageSizeNumber },
     });
   } catch (err) {
     next(err);

@@ -43,6 +43,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       userId: user.id,
       userType: 'miniapp',
       openid: user.openid,
+      role: user.role,
     });
 
     res.json({

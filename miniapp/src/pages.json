@@ -95,6 +95,18 @@
         "navigationBarTitleText": "我的问题",
         "navigationStyle": "default"
       }
+    },
+    {
+      "path": "pages/order/detail",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/staff/verify",
+      "style": {
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {

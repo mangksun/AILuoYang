@@ -25,8 +25,12 @@
     </div>
 
     <el-table :data="tableData" v-loading="loading" border stripe>
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="orderId" label="订单ID" width="150" />
+      <el-table-column prop="id" label="ID" width="70" />
+      <el-table-column label="订单号" width="180">
+        <template #default="{ row }">
+          {{ row.orderNo || row.orderId }}
+        </template>
+      </el-table-column>
       <el-table-column prop="status" label="状态" width="100">
         <template #default="{ row }">
           <el-tag :type="row.status === 'used' ? 'success' : 'info'">
@@ -34,8 +38,12 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="firstUseTime" label="首次核销时间" width="180" />
-      <el-table-column prop="verifier" label="核销人" min-width="120" />
+      <el-table-column prop="firstVerifiedAt" label="首次核销时间" width="180" />
+      <el-table-column label="核销人" min-width="120">
+        <template #default="{ row }">
+          {{ row.verifierName || '-' }}
+        </template>
+      </el-table-column>
     </el-table>
 
     <div class="pagination-container">

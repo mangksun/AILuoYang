@@ -7,9 +7,10 @@ const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
 const checkSchema = Joi.object({
   orderId: Joi.number().integer().required(),
-  projectId: Joi.number().integer().required(),
-  gateId: Joi.number().integer().required(),
+  projectId: Joi.number().integer().allow(null).default(0),
+  gateId: Joi.number().integer().allow(null).default(0),
   checkType: Joi.string().valid('entry', 'project').required(),
+  verifiedBy: Joi.number().integer().allow(null).optional(),
 });
 
 const identityVerifySchema = Joi.object({
@@ -134,6 +135,7 @@ export async function check(req: Request, res: Response, next: NextFunction) {
         data: {
           status: 'used',
           firstVerifiedAt: new Date(),
+          verifiedBy: value.verifiedBy || null,
         },
       });
     }
