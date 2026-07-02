@@ -22,8 +22,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { onLoad, onShow, onHide, onUnload } from '@dcloudio/uni-app';
+import { LIVE2D_H5_URL } from '@/config/endpoints';
 
-const DEFAULT_H5_URL = 'http://10.111.6.196:5173/live2d/index.html';
+const DEFAULT_H5_URL = LIVE2D_H5_URL;
 
 const h5Url = ref(DEFAULT_H5_URL);
 const loading = ref(true);
@@ -37,6 +38,17 @@ function normalizeH5Url(rawUrl?: string) {
   } catch {
     return rawUrl;
   }
+}
+
+function isLocalDebugHttpUrl(url: string) {
+  return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(url)
+    || /^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?(\/|$)/.test(url)
+    || /^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?(\/|$)/.test(url)
+    || /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?(\/|$)/.test(url);
+}
+
+function isAllowedH5Url(url: string) {
+  return /^https:\/\//.test(url) || isLocalDebugHttpUrl(url);
 }
 
 function onWebMessage(event: any) {
@@ -71,8 +83,8 @@ function reload() {
 onLoad((query = {}) => {
   h5Url.value = normalizeH5Url(query.h5Url as string | undefined);
 
-  if (!/^https:\/\//.test(h5Url.value) && !/^http:\/\/(localhost|10\.111\.6\.196)/.test(h5Url.value)) {
-    errorMessage.value = 'web-view 正式环境必须使用已配置业务域名的 HTTPS 地址';
+  if (!isAllowedH5Url(h5Url.value)) {
+    errorMessage.value = `web-view 正式环境必须使用已配置业务域名的 HTTPS 地址。当前地址：${h5Url.value}`;
     loading.value = false;
   }
 });

@@ -70,6 +70,13 @@
       }
     },
     {
+      "path": "pages/voice-recognizer/index",
+      "style": {
+        "navigationBarTitleText": "语音输入",
+        "navigationStyle": "default"
+      }
+    },
+    {
       "path": "pages/user-center/index",
       "style": {
         "navigationStyle": "custom"
